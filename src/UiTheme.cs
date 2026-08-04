@@ -94,8 +94,11 @@ namespace OlyDrugstorePOS
             grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(226, 232, 240);
             grid.ColumnHeadersDefaultCellStyle.ForeColor = Text;
             grid.ColumnHeadersDefaultCellStyle.Font = FontBold;
+            grid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
             grid.ColumnHeadersHeight = 36;
             grid.DefaultCellStyle.Font = FontNormal;
+            grid.DefaultCellStyle.Padding = new Padding(8, 0, 8, 0);
+            grid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
             grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(220, 252, 231);
             grid.DefaultCellStyle.SelectionForeColor = Text;
             grid.RowTemplate.Height = 34;

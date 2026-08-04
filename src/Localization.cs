@@ -24,6 +24,9 @@ namespace OlyDrugstorePOS
             Fr["Search"] = "Scanner ou rechercher";
             Fr["Add"] = "Ajouter";
             Fr["Remove"] = "Retirer";
+            Fr["Increase"] = "+ Quantite";
+            Fr["Decrease"] = "- Quantite";
+            Fr["ClearCart"] = "Vider ticket";
             Fr["Checkout"] = "Encaisser";
             Fr["PrintTicket"] = "Imprimer ticket";
             Fr["Name"] = "Nom";
@@ -68,6 +71,9 @@ namespace OlyDrugstorePOS
             En["Search"] = "Scan or search";
             En["Add"] = "Add";
             En["Remove"] = "Remove";
+            En["Increase"] = "+ Quantity";
+            En["Decrease"] = "- Quantity";
+            En["ClearCart"] = "Clear ticket";
             En["Checkout"] = "Checkout";
             En["PrintTicket"] = "Print ticket";
             En["Name"] = "Name";

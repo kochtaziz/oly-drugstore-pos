@@ -29,6 +29,9 @@ namespace OlyDrugstorePOS
         private CheckBox returnCheckBox;
         private CheckBox debtCheckBox;
         private TextBox customerTextBox;
+        private Button increaseQuantityButton;
+        private Button decreaseQuantityButton;
+        private Button clearCartButton;
 
         private DataGridView stockGrid;
         private TextBox productNameInput;
@@ -189,6 +192,7 @@ namespace OlyDrugstorePOS
 
             searchTextBox = UiTheme.TextInput(18, 56, 420);
             searchTextBox.Font = new Font("Segoe UI", 16, FontStyle.Bold);
+            searchTextBox.TextChanged += delegate { RefreshProducts(); };
             searchTextBox.KeyDown += delegate(object sender, KeyEventArgs e)
             {
                 if (e.KeyCode == Keys.Enter)
@@ -241,51 +245,78 @@ namespace OlyDrugstorePOS
             removeButton.Name = "removeButton";
             removeButton.Left = 18;
             removeButton.Top = 372;
-            removeButton.Width = 145;
+            removeButton.Width = 110;
             removeButton.Height = 42;
             removeButton.Click += delegate { RemoveSelectedCartItem(); };
             checkoutCard.Controls.Add(removeButton);
 
+            decreaseQuantityButton = UiTheme.SecondaryButton(Localization.T("Decrease"));
+            decreaseQuantityButton.Name = "decreaseQuantityButton";
+            decreaseQuantityButton.Left = 138;
+            decreaseQuantityButton.Top = 372;
+            decreaseQuantityButton.Width = 105;
+            decreaseQuantityButton.Height = 42;
+            decreaseQuantityButton.Click += delegate { ChangeSelectedQuantity(-1); };
+            checkoutCard.Controls.Add(decreaseQuantityButton);
+
+            increaseQuantityButton = UiTheme.SecondaryButton(Localization.T("Increase"));
+            increaseQuantityButton.Name = "increaseQuantityButton";
+            increaseQuantityButton.Left = 253;
+            increaseQuantityButton.Top = 372;
+            increaseQuantityButton.Width = 105;
+            increaseQuantityButton.Height = 42;
+            increaseQuantityButton.Click += delegate { ChangeSelectedQuantity(1); };
+            checkoutCard.Controls.Add(increaseQuantityButton);
+
+            clearCartButton = UiTheme.SecondaryButton(Localization.T("ClearCart"));
+            clearCartButton.Name = "clearCartButton";
+            clearCartButton.Left = 368;
+            clearCartButton.Top = 372;
+            clearCartButton.Width = 100;
+            clearCartButton.Height = 42;
+            clearCartButton.Click += delegate { cart.Clear(); RefreshCart(); };
+            checkoutCard.Controls.Add(clearCartButton);
+
             employeeDiscountCheckBox = new CheckBox();
             employeeDiscountCheckBox.Name = "employeeDiscountCheckBox";
-            employeeDiscountCheckBox.Left = 180;
-            employeeDiscountCheckBox.Top = 382;
+            employeeDiscountCheckBox.Left = 18;
+            employeeDiscountCheckBox.Top = 424;
             employeeDiscountCheckBox.Width = 230;
             employeeDiscountCheckBox.Font = UiTheme.FontBold;
             employeeDiscountCheckBox.CheckedChanged += delegate { ApplyEmployeeDiscount(); };
             checkoutCard.Controls.Add(employeeDiscountCheckBox);
 
-            AddLabel(checkoutCard, "discountLabel", Localization.T("Discount"), 18, 435);
+            AddLabel(checkoutCard, "discountLabel", Localization.T("Discount"), 18, 468);
             saleDiscountInput = MoneyInput();
             saleDiscountInput.Left = 18;
-            saleDiscountInput.Top = 462;
+            saleDiscountInput.Top = 495;
             saleDiscountInput.Width = 130;
             saleDiscountInput.ValueChanged += delegate { RefreshCart(); };
             checkoutCard.Controls.Add(saleDiscountInput);
 
-            AddLabel(checkoutCard, "paymentLabel", Localization.T("Payment"), 170, 435);
+            AddLabel(checkoutCard, "paymentLabel", Localization.T("Payment"), 170, 468);
             paymentComboBox = new ComboBox();
             paymentComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             paymentComboBox.Items.AddRange(new object[] { "Cash", "Card", "Online", "In store" });
             paymentComboBox.SelectedIndex = 0;
             paymentComboBox.Left = 170;
-            paymentComboBox.Top = 462;
+            paymentComboBox.Top = 495;
             paymentComboBox.Width = 150;
             checkoutCard.Controls.Add(paymentComboBox);
 
-            returnCheckBox = Check(Localization.T("Return"), "returnCheckBox", 340, 462);
+            returnCheckBox = Check(Localization.T("Return"), "returnCheckBox", 340, 495);
             checkoutCard.Controls.Add(returnCheckBox);
 
-            debtCheckBox = Check(Localization.T("Debt"), "debtCheckBox", 18, 512);
+            debtCheckBox = Check(Localization.T("Debt"), "debtCheckBox", 18, 548);
             checkoutCard.Controls.Add(debtCheckBox);
 
-            AddLabel(checkoutCard, "customerLabel", Localization.T("Customer"), 170, 500);
-            customerTextBox = UiTheme.TextInput(170, 525, 230);
+            AddLabel(checkoutCard, "customerLabel", Localization.T("Customer"), 170, 536);
+            customerTextBox = UiTheme.TextInput(170, 561, 230);
             checkoutCard.Controls.Add(customerTextBox);
 
             totalLabel = new Label();
             totalLabel.Left = 18;
-            totalLabel.Top = 585;
+            totalLabel.Top = 606;
             totalLabel.Width = 450;
             totalLabel.Height = 48;
             totalLabel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
@@ -296,7 +327,7 @@ namespace OlyDrugstorePOS
             Button checkoutButton = UiTheme.PrimaryButton(Localization.T("Checkout"));
             checkoutButton.Name = "checkoutButton";
             checkoutButton.Left = 18;
-            checkoutButton.Top = 645;
+            checkoutButton.Top = 660;
             checkoutButton.Width = 450;
             checkoutButton.Height = 62;
             checkoutButton.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
@@ -624,6 +655,9 @@ namespace OlyDrugstorePOS
 
             SetText("addButton", Localization.T("Add"));
             SetText("removeButton", Localization.T("Remove"));
+            SetText("increaseQuantityButton", Localization.T("Increase"));
+            SetText("decreaseQuantityButton", Localization.T("Decrease"));
+            SetText("clearCartButton", Localization.T("ClearCart"));
             SetText("checkoutButton", Localization.T("Checkout"));
             SetText("discountLabel", Localization.T("Discount"));
             SetText("employeeDiscountCheckBox", Localization.T("EmployeeDiscount"));
@@ -668,6 +702,11 @@ namespace OlyDrugstorePOS
         {
             List<Product> products = store.Database.Products
                 .Where(p => p.StoreId == activeStoreId)
+                .Where(p => searchTextBox == null ||
+                            string.IsNullOrEmpty(searchTextBox.Text) ||
+                            p.Name.ToLowerInvariant().Contains(searchTextBox.Text.ToLowerInvariant()) ||
+                            p.Category.ToLowerInvariant().Contains(searchTextBox.Text.ToLowerInvariant()) ||
+                            (!string.IsNullOrEmpty(p.Barcode) && p.Barcode.Contains(searchTextBox.Text)))
                 .OrderBy(p => p.Name)
                 .ToList();
 
@@ -675,12 +714,14 @@ namespace OlyDrugstorePOS
             {
                 productsGrid.DataSource = null;
                 productsGrid.DataSource = products;
+                FormatProductsGrid(productsGrid, false);
             }
 
             if (stockGrid != null)
             {
                 stockGrid.DataSource = null;
                 stockGrid.DataSource = products.ToList();
+                FormatProductsGrid(stockGrid, true);
             }
         }
 
@@ -720,6 +761,20 @@ namespace OlyDrugstorePOS
             RefreshCart();
         }
 
+        private void ChangeSelectedQuantity(int change)
+        {
+            if (cartGrid.CurrentRow == null) return;
+            SaleItem item = cartGrid.CurrentRow.DataBoundItem as SaleItem;
+            if (item == null) return;
+
+            item.Quantity += change;
+            if (item.Quantity <= 0)
+            {
+                cart.Remove(item);
+            }
+            RefreshCart();
+        }
+
         private void ApplyEmployeeDiscount()
         {
             if (employeeDiscountCheckBox.Checked)
@@ -736,6 +791,7 @@ namespace OlyDrugstorePOS
             {
                 cartGrid.DataSource = null;
                 cartGrid.DataSource = cart.ToList();
+                FormatCartGrid();
             }
 
             decimal discount = saleDiscountInput != null ? saleDiscountInput.Value : 0;
@@ -914,6 +970,73 @@ namespace OlyDrugstorePOS
                 "Entrees: " + deposits.ToString("0.000") + " DT | Sorties: " + withdrawals.ToString("0.000") + " DT\n" +
                 "Cash attendu: " + expected.ToString("0.000") + " DT";
             sessionSummaryLabel.Text = "Attendu: " + expected.ToString("0.000") + " DT";
+        }
+
+        private void FormatProductsGrid(DataGridView grid, bool adminView)
+        {
+            HideColumn(grid, "Id");
+            HideColumn(grid, "StoreId");
+            if (!adminView)
+            {
+                HideColumn(grid, "PurchasePrice");
+                HideColumn(grid, "TaxRate");
+                HideColumn(grid, "MinimumQuantity");
+                HideColumn(grid, "ExpiryDate");
+            }
+
+            RenameColumn(grid, "Name", Localization.T("Name"));
+            RenameColumn(grid, "Category", Localization.T("Category"));
+            RenameColumn(grid, "Barcode", Localization.T("Barcode"));
+            RenameColumn(grid, "PurchasePrice", Localization.T("PurchasePrice"));
+            RenameColumn(grid, "SalePrice", Localization.T("SalePrice"));
+            RenameColumn(grid, "TaxRate", Localization.T("Tax"));
+            RenameColumn(grid, "Quantity", Localization.T("Quantity"));
+            RenameColumn(grid, "MinimumQuantity", Localization.T("Minimum"));
+            RenameColumn(grid, "ExpiryDate", Localization.T("Expiry"));
+
+            AlignColumn(grid, "PurchasePrice", DataGridViewContentAlignment.MiddleRight);
+            AlignColumn(grid, "SalePrice", DataGridViewContentAlignment.MiddleRight);
+            AlignColumn(grid, "TaxRate", DataGridViewContentAlignment.MiddleRight);
+            AlignColumn(grid, "Quantity", DataGridViewContentAlignment.MiddleCenter);
+            AlignColumn(grid, "MinimumQuantity", DataGridViewContentAlignment.MiddleCenter);
+        }
+
+        private void FormatCartGrid()
+        {
+            HideColumn(cartGrid, "ProductId");
+            HideColumn(cartGrid, "TaxRate");
+            HideColumn(cartGrid, "Discount");
+            RenameColumn(cartGrid, "ProductName", Localization.T("Name"));
+            RenameColumn(cartGrid, "Quantity", Localization.T("Quantity"));
+            RenameColumn(cartGrid, "UnitPrice", Localization.T("SalePrice"));
+            RenameColumn(cartGrid, "LineTotal", Localization.T("Total"));
+            AlignColumn(cartGrid, "Quantity", DataGridViewContentAlignment.MiddleCenter);
+            AlignColumn(cartGrid, "UnitPrice", DataGridViewContentAlignment.MiddleRight);
+            AlignColumn(cartGrid, "LineTotal", DataGridViewContentAlignment.MiddleRight);
+        }
+
+        private void HideColumn(DataGridView grid, string columnName)
+        {
+            if (grid.Columns.Contains(columnName))
+            {
+                grid.Columns[columnName].Visible = false;
+            }
+        }
+
+        private void RenameColumn(DataGridView grid, string columnName, string title)
+        {
+            if (grid.Columns.Contains(columnName))
+            {
+                grid.Columns[columnName].HeaderText = title;
+            }
+        }
+
+        private void AlignColumn(DataGridView grid, string columnName, DataGridViewContentAlignment alignment)
+        {
+            if (grid.Columns.Contains(columnName))
+            {
+                grid.Columns[columnName].DefaultCellStyle.Alignment = alignment;
+            }
         }
 
         private void RefreshReports()
