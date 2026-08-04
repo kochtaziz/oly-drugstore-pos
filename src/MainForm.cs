@@ -99,15 +99,15 @@ namespace OlyDrugstorePOS
         {
             TableLayoutPanel top = new TableLayoutPanel();
             top.Dock = DockStyle.Top;
-            top.Height = 74;
+            top.Height = 96;
             top.BackColor = UiTheme.Primary;
             top.ColumnCount = 4;
             top.RowCount = 1;
-            top.Padding = new Padding(22, 10, 22, 10);
-            top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38));
+            top.Padding = new Padding(24, 14, 24, 14);
+            top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 360));
             top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280));
             top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
-            top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62));
+            top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
             Panel brand = new Panel();
             brand.Dock = DockStyle.Fill;
@@ -117,11 +117,12 @@ namespace OlyDrugstorePOS
             Label logo = new Label();
             logo.Text = "OLY Drugstore POS";
             logo.ForeColor = Color.White;
-            logo.Font = new Font("Segoe UI", 18, FontStyle.Bold);
+            logo.Font = new Font("Segoe UI", 20, FontStyle.Bold);
             logo.Left = 0;
-            logo.Top = 2;
-            logo.Width = 360;
-            logo.Height = 28;
+            logo.Top = 4;
+            logo.Width = 350;
+            logo.Height = 36;
+            logo.TextAlign = ContentAlignment.MiddleLeft;
             brand.Controls.Add(logo);
 
             Label userLabel = new Label();
@@ -129,16 +130,17 @@ namespace OlyDrugstorePOS
             userLabel.ForeColor = Color.FromArgb(203, 213, 225);
             userLabel.Font = UiTheme.FontSmall;
             userLabel.Left = 2;
-            userLabel.Top = 34;
-            userLabel.Width = 360;
-            userLabel.Height = 18;
+            userLabel.Top = 46;
+            userLabel.Width = 350;
+            userLabel.Height = 22;
+            userLabel.TextAlign = ContentAlignment.MiddleLeft;
             brand.Controls.Add(userLabel);
 
             storeComboBox = new ComboBox();
             storeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             storeComboBox.Font = UiTheme.FontBold;
             storeComboBox.Dock = DockStyle.Fill;
-            storeComboBox.Margin = new Padding(8, 14, 8, 10);
+            storeComboBox.Margin = new Padding(10, 20, 10, 18);
             foreach (Store item in store.Database.Stores)
             {
                 storeComboBox.Items.Add(item.Id + " - " + item.Name);
@@ -157,7 +159,7 @@ namespace OlyDrugstorePOS
             languageComboBox.Items.AddRange(new object[] { "FR", "EN" });
             languageComboBox.SelectedItem = Localization.Language;
             languageComboBox.Dock = DockStyle.Fill;
-            languageComboBox.Margin = new Padding(8, 14, 8, 10);
+            languageComboBox.Margin = new Padding(10, 20, 10, 18);
             languageComboBox.SelectedIndexChanged += delegate
             {
                 Localization.Language = languageComboBox.SelectedItem.ToString();
@@ -170,7 +172,7 @@ namespace OlyDrugstorePOS
             sessionSummaryLabel.Font = UiTheme.FontBold;
             sessionSummaryLabel.TextAlign = ContentAlignment.MiddleRight;
             sessionSummaryLabel.Dock = DockStyle.Fill;
-            sessionSummaryLabel.Margin = new Padding(8, 13, 0, 8);
+            sessionSummaryLabel.Margin = new Padding(10, 18, 0, 16);
             top.Controls.Add(sessionSummaryLabel, 3, 0);
 
             return top;
