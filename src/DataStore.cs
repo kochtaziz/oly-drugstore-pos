@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Xml.Serialization;
 
 namespace OlyDrugstorePOS
@@ -16,7 +17,7 @@ namespace OlyDrugstorePOS
 
         public DataStore()
         {
-            string root = AppDomain.CurrentDomain.BaseDirectory;
+            string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             dataDirectory = Path.Combine(root, "data");
             backupDirectory = Path.Combine(root, "backups");
             dataPath = Path.Combine(dataDirectory, "oly-pos-data.xml");

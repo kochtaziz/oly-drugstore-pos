@@ -2,6 +2,7 @@ bin/
 obj/
 data/
 backups/
+screenshots/
 *.user
 *.suo
 *.log

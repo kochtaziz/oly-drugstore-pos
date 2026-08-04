@@ -73,13 +73,12 @@ namespace OlyDrugstorePOS
             BackColor = UiTheme.Background;
             Font = UiTheme.FontNormal;
 
-            Controls.Add(BuildTopBar());
-
             tabs = new TabControl();
             tabs.Dock = DockStyle.Fill;
             tabs.Font = UiTheme.FontBold;
             tabs.Padding = new Point(18, 8);
             Controls.Add(tabs);
+            Controls.Add(BuildTopBar());
 
             if (user.Role == UserRole.Admin)
             {
@@ -183,8 +182,8 @@ namespace OlyDrugstorePOS
             TabPage tab = NewTab("salesTab");
 
             TableLayoutPanel shell = PageGrid(2, 1);
-            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45));
             tab.Controls.Add(shell);
 
             Panel productCard = UiTheme.CardPanel();
@@ -236,7 +235,7 @@ namespace OlyDrugstorePOS
             productButtonsPanel.Left = 18;
             productButtonsPanel.Top = 160;
             productButtonsPanel.Width = 640;
-            productButtonsPanel.Height = 470;
+            productButtonsPanel.Height = 345;
             productButtonsPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             productButtonsPanel.AutoScroll = true;
             productButtonsPanel.BackColor = Color.White;
@@ -253,43 +252,43 @@ namespace OlyDrugstorePOS
             cartGrid = UiTheme.Grid();
             cartGrid.Left = 18;
             cartGrid.Top = 56;
-            cartGrid.Width = 450;
-            cartGrid.Height = 300;
+            cartGrid.Width = 410;
+            cartGrid.Height = 220;
             cartGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             checkoutCard.Controls.Add(cartGrid);
 
             Button removeButton = UiTheme.SecondaryButton(Localization.T("Remove"));
             removeButton.Name = "removeButton";
             removeButton.Left = 18;
-            removeButton.Top = 372;
-            removeButton.Width = 110;
+            removeButton.Top = 292;
+            removeButton.Width = 96;
             removeButton.Height = 42;
             removeButton.Click += delegate { RemoveSelectedCartItem(); };
             checkoutCard.Controls.Add(removeButton);
 
             decreaseQuantityButton = UiTheme.SecondaryButton(Localization.T("Decrease"));
             decreaseQuantityButton.Name = "decreaseQuantityButton";
-            decreaseQuantityButton.Left = 138;
-            decreaseQuantityButton.Top = 372;
-            decreaseQuantityButton.Width = 105;
+            decreaseQuantityButton.Left = 122;
+            decreaseQuantityButton.Top = 292;
+            decreaseQuantityButton.Width = 92;
             decreaseQuantityButton.Height = 42;
             decreaseQuantityButton.Click += delegate { ChangeSelectedQuantity(-1); };
             checkoutCard.Controls.Add(decreaseQuantityButton);
 
             increaseQuantityButton = UiTheme.SecondaryButton(Localization.T("Increase"));
             increaseQuantityButton.Name = "increaseQuantityButton";
-            increaseQuantityButton.Left = 253;
-            increaseQuantityButton.Top = 372;
-            increaseQuantityButton.Width = 105;
+            increaseQuantityButton.Left = 222;
+            increaseQuantityButton.Top = 292;
+            increaseQuantityButton.Width = 92;
             increaseQuantityButton.Height = 42;
             increaseQuantityButton.Click += delegate { ChangeSelectedQuantity(1); };
             checkoutCard.Controls.Add(increaseQuantityButton);
 
             clearCartButton = UiTheme.SecondaryButton(Localization.T("ClearCart"));
             clearCartButton.Name = "clearCartButton";
-            clearCartButton.Left = 368;
-            clearCartButton.Top = 372;
-            clearCartButton.Width = 100;
+            clearCartButton.Left = 322;
+            clearCartButton.Top = 292;
+            clearCartButton.Width = 116;
             clearCartButton.Height = 42;
             clearCartButton.Click += delegate { cart.Clear(); RefreshCart(); };
             checkoutCard.Controls.Add(clearCartButton);
@@ -297,57 +296,57 @@ namespace OlyDrugstorePOS
             employeeDiscountCheckBox = new CheckBox();
             employeeDiscountCheckBox.Name = "employeeDiscountCheckBox";
             employeeDiscountCheckBox.Left = 18;
-            employeeDiscountCheckBox.Top = 424;
+            employeeDiscountCheckBox.Top = 342;
             employeeDiscountCheckBox.Width = 230;
             employeeDiscountCheckBox.Font = UiTheme.FontBold;
             employeeDiscountCheckBox.CheckedChanged += delegate { ApplyEmployeeDiscount(); };
             checkoutCard.Controls.Add(employeeDiscountCheckBox);
 
-            AddLabel(checkoutCard, "discountLabel", Localization.T("Discount"), 18, 468);
+            AddLabel(checkoutCard, "discountLabel", Localization.T("Discount"), 18, 374);
             saleDiscountInput = MoneyInput();
             saleDiscountInput.Left = 18;
-            saleDiscountInput.Top = 495;
+            saleDiscountInput.Top = 400;
             saleDiscountInput.Width = 130;
             saleDiscountInput.ValueChanged += delegate { RefreshCart(); };
             checkoutCard.Controls.Add(saleDiscountInput);
 
-            AddLabel(checkoutCard, "paymentLabel", Localization.T("Payment"), 170, 468);
+            AddLabel(checkoutCard, "paymentLabel", Localization.T("Payment"), 150, 374);
             paymentComboBox = new ComboBox();
             paymentComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             paymentComboBox.Items.AddRange(new object[] { "Cash", "Card", "Online", "In store" });
             paymentComboBox.SelectedIndex = 0;
-            paymentComboBox.Left = 170;
-            paymentComboBox.Top = 495;
-            paymentComboBox.Width = 150;
+            paymentComboBox.Left = 150;
+            paymentComboBox.Top = 400;
+            paymentComboBox.Width = 130;
             checkoutCard.Controls.Add(paymentComboBox);
 
-            returnCheckBox = Check(Localization.T("Return"), "returnCheckBox", 340, 495);
+            returnCheckBox = Check(Localization.T("Return"), "returnCheckBox", 250, 342);
             checkoutCard.Controls.Add(returnCheckBox);
 
-            debtCheckBox = Check(Localization.T("Debt"), "debtCheckBox", 18, 548);
+            debtCheckBox = Check(Localization.T("Debt"), "debtCheckBox", 340, 342);
             checkoutCard.Controls.Add(debtCheckBox);
 
-            AddLabel(checkoutCard, "customerLabel", Localization.T("Customer"), 170, 536);
-            customerTextBox = UiTheme.TextInput(170, 561, 230);
+            AddLabel(checkoutCard, "customerLabel", Localization.T("Customer"), 300, 374);
+            customerTextBox = UiTheme.TextInput(300, 400, 135);
             checkoutCard.Controls.Add(customerTextBox);
 
             totalLabel = new Label();
             totalLabel.Left = 18;
-            totalLabel.Top = 606;
-            totalLabel.Width = 450;
-            totalLabel.Height = 48;
-            totalLabel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            totalLabel.Font = new Font("Segoe UI", 24, FontStyle.Bold);
+            totalLabel.Top = 428;
+            totalLabel.Width = 410;
+            totalLabel.Height = 36;
+            totalLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            totalLabel.Font = new Font("Segoe UI", 20, FontStyle.Bold);
             totalLabel.ForeColor = UiTheme.Accent;
             checkoutCard.Controls.Add(totalLabel);
 
             Button checkoutButton = UiTheme.PrimaryButton(Localization.T("Checkout"));
             checkoutButton.Name = "checkoutButton";
             checkoutButton.Left = 18;
-            checkoutButton.Top = 660;
-            checkoutButton.Width = 450;
-            checkoutButton.Height = 62;
-            checkoutButton.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            checkoutButton.Top = 465;
+            checkoutButton.Width = 410;
+            checkoutButton.Height = 48;
+            checkoutButton.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             checkoutButton.Font = new Font("Segoe UI", 16, FontStyle.Bold);
             checkoutButton.Click += delegate { Checkout(); };
             checkoutCard.Controls.Add(checkoutButton);
@@ -357,8 +356,8 @@ namespace OlyDrugstorePOS
         {
             TabPage tab = NewTab("productsTab");
             TableLayoutPanel shell = PageGrid(2, 1);
-            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62));
-            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 56));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44));
             tab.Controls.Add(shell);
 
             Panel listCard = UiTheme.CardPanel();
@@ -371,7 +370,7 @@ namespace OlyDrugstorePOS
             stockGrid.Left = 18;
             stockGrid.Top = 58;
             stockGrid.Width = 710;
-            stockGrid.Height = 610;
+            stockGrid.Height = 450;
             stockGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             stockGrid.CellClick += delegate { LoadSelectedProduct(); };
             listCard.Controls.Add(stockGrid);
@@ -388,21 +387,22 @@ namespace OlyDrugstorePOS
             purchasePriceInput = AddMoneyField(form, "purchaseLabel", 22, 274);
             salePriceInput = AddMoneyField(form, "salePriceLabel", 245, 274);
             taxInput = AddMoneyField(form, "taxLabel", 22, 340);
-            quantityInput = AddNumberField(form, "quantityLabel", 245, 340);
-            minimumInput = AddNumberField(form, "minimumLabel", 22, 406);
+            quantityInput = AddNumberField(form, "quantityLabel", 167, 340);
+            minimumInput = AddNumberField(form, "minimumLabel", 312, 340);
 
-            AddLabel(form, "expiryLabel", Localization.T("Expiry"), 245, 406);
+            AddLabel(form, "expiryLabel", Localization.T("Expiry"), 22, 406);
             expiryInput = new DateTimePicker();
-            expiryInput.Left = 245;
+            expiryInput.Left = 22;
             expiryInput.Top = 432;
             expiryInput.Width = 160;
+            expiryInput.Format = DateTimePickerFormat.Short;
             form.Controls.Add(expiryInput);
 
-            AddLabel(form, "storeFieldLabel", "Store", 22, 472);
+            AddLabel(form, "storeFieldLabel", "Store", 245, 406);
             productStoreInput = new ComboBox();
             productStoreInput.DropDownStyle = ComboBoxStyle.DropDownList;
-            productStoreInput.Left = 22;
-            productStoreInput.Top = 498;
+            productStoreInput.Left = 245;
+            productStoreInput.Top = 432;
             productStoreInput.Width = 180;
             foreach (Store item in store.Database.Stores) productStoreInput.Items.Add(item.Id);
             productStoreInput.SelectedIndex = 0;
@@ -411,17 +411,17 @@ namespace OlyDrugstorePOS
             Button save = UiTheme.PrimaryButton(Localization.T("SaveProduct"));
             save.Name = "saveProductButton";
             save.Left = 22;
-            save.Top = 548;
-            save.Width = 362;
-            save.Height = 54;
+            save.Top = 486;
+            save.Width = 175;
+            save.Height = 46;
             save.Click += delegate { SaveProduct(); };
             form.Controls.Add(save);
 
             Button delete = UiTheme.SecondaryButton(Localization.T("DeleteProduct"));
             delete.Name = "deleteProductButton";
-            delete.Left = 22;
-            delete.Top = 612;
-            delete.Width = 362;
+            delete.Left = 210;
+            delete.Top = 486;
+            delete.Width = 175;
             delete.Height = 46;
             delete.Click += delegate { DeleteSelectedProduct(); };
             form.Controls.Add(delete);
@@ -1115,8 +1115,8 @@ namespace OlyDrugstorePOS
             RenameColumn(grid, "Name", Localization.T("Name"));
             RenameColumn(grid, "Category", Localization.T("Category"));
             RenameColumn(grid, "Barcode", Localization.T("Barcode"));
-            RenameColumn(grid, "PurchasePrice", Localization.T("PurchasePrice"));
-            RenameColumn(grid, "SalePrice", Localization.T("SalePrice"));
+            RenameColumn(grid, "PurchasePrice", adminView ? "Achat" : Localization.T("PurchasePrice"));
+            RenameColumn(grid, "SalePrice", adminView ? "Vente" : Localization.T("SalePrice"));
             RenameColumn(grid, "TaxRate", Localization.T("Tax"));
             RenameColumn(grid, "Quantity", Localization.T("Quantity"));
             RenameColumn(grid, "MinimumQuantity", Localization.T("Minimum"));
@@ -1127,6 +1127,16 @@ namespace OlyDrugstorePOS
             AlignColumn(grid, "TaxRate", DataGridViewContentAlignment.MiddleRight);
             AlignColumn(grid, "Quantity", DataGridViewContentAlignment.MiddleCenter);
             AlignColumn(grid, "MinimumQuantity", DataGridViewContentAlignment.MiddleCenter);
+
+            SetColumnWidth(grid, "Name", 160);
+            SetColumnWidth(grid, "Category", 105);
+            SetColumnWidth(grid, "Barcode", 120);
+            SetColumnWidth(grid, "PurchasePrice", 105);
+            SetColumnWidth(grid, "SalePrice", 105);
+            SetColumnWidth(grid, "TaxRate", 70);
+            SetColumnWidth(grid, "Quantity", 80);
+            SetColumnWidth(grid, "MinimumQuantity", 80);
+            SetColumnWidth(grid, "ExpiryDate", 110);
         }
 
         private void FormatCartGrid()
@@ -1136,11 +1146,15 @@ namespace OlyDrugstorePOS
             HideColumn(cartGrid, "Discount");
             RenameColumn(cartGrid, "ProductName", Localization.T("Name"));
             RenameColumn(cartGrid, "Quantity", Localization.T("Quantity"));
-            RenameColumn(cartGrid, "UnitPrice", Localization.T("SalePrice"));
+            RenameColumn(cartGrid, "UnitPrice", "Prix");
             RenameColumn(cartGrid, "LineTotal", Localization.T("Total"));
             AlignColumn(cartGrid, "Quantity", DataGridViewContentAlignment.MiddleCenter);
             AlignColumn(cartGrid, "UnitPrice", DataGridViewContentAlignment.MiddleRight);
             AlignColumn(cartGrid, "LineTotal", DataGridViewContentAlignment.MiddleRight);
+            SetColumnWidth(cartGrid, "ProductName", 170);
+            SetColumnWidth(cartGrid, "Quantity", 70);
+            SetColumnWidth(cartGrid, "UnitPrice", 80);
+            SetColumnWidth(cartGrid, "LineTotal", 90);
         }
 
         private void HideColumn(DataGridView grid, string columnName)
@@ -1164,6 +1178,15 @@ namespace OlyDrugstorePOS
             if (grid.Columns.Contains(columnName))
             {
                 grid.Columns[columnName].DefaultCellStyle.Alignment = alignment;
+            }
+        }
+
+        private void SetColumnWidth(DataGridView grid, string columnName, int width)
+        {
+            if (grid.Columns.Contains(columnName))
+            {
+                grid.Columns[columnName].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                grid.Columns[columnName].Width = width;
             }
         }
 

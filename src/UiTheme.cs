@@ -33,7 +33,7 @@ namespace OlyDrugstorePOS
             label.Text = text;
             label.Left = left;
             label.Top = top;
-            label.Width = 190;
+            label.Width = 140;
             label.Height = 28;
             label.ForeColor = Muted;
             label.Font = FontBold;
@@ -90,7 +90,8 @@ namespace OlyDrugstorePOS
             grid.AllowUserToDeleteRows = false;
             grid.ReadOnly = true;
             grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+            grid.ScrollBars = ScrollBars.Both;
             grid.EnableHeadersVisualStyles = false;
             grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(226, 232, 240);
             grid.ColumnHeadersDefaultCellStyle.ForeColor = Text;
