@@ -19,7 +19,8 @@ namespace OlyDrugstorePOS
         private ComboBox storeComboBox;
         private ComboBox languageComboBox;
         private TextBox searchTextBox;
-        private DataGridView productsGrid;
+        private FlowLayoutPanel productButtonsPanel;
+        private ComboBox categoryFilterComboBox;
         private DataGridView cartGrid;
         private Label totalLabel;
         private Label sessionSummaryLabel;
@@ -32,6 +33,8 @@ namespace OlyDrugstorePOS
         private Button increaseQuantityButton;
         private Button decreaseQuantityButton;
         private Button clearCartButton;
+        private bool suppressSearchAutoAdd;
+        private bool refreshingCategories;
 
         private DataGridView stockGrid;
         private TextBox productNameInput;
@@ -192,7 +195,7 @@ namespace OlyDrugstorePOS
 
             searchTextBox = UiTheme.TextInput(18, 56, 420);
             searchTextBox.Font = new Font("Segoe UI", 16, FontStyle.Bold);
-            searchTextBox.TextChanged += delegate { RefreshProducts(); };
+            searchTextBox.TextChanged += delegate { HandleSearchChanged(); };
             searchTextBox.KeyDown += delegate(object sender, KeyEventArgs e)
             {
                 if (e.KeyCode == Keys.Enter)
@@ -212,19 +215,31 @@ namespace OlyDrugstorePOS
             addButton.Click += delegate { AddProductToCart(searchTextBox.Text); };
             productCard.Controls.Add(addButton);
 
-            productsGrid = UiTheme.Grid();
-            productsGrid.Left = 18;
-            productsGrid.Top = 122;
-            productsGrid.Width = 640;
-            productsGrid.Height = 505;
-            productsGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            productsGrid.CellDoubleClick += delegate
+            categoryFilterComboBox = new ComboBox();
+            categoryFilterComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            categoryFilterComboBox.Font = UiTheme.FontBold;
+            categoryFilterComboBox.Left = 18;
+            categoryFilterComboBox.Top = 112;
+            categoryFilterComboBox.Width = 240;
+            categoryFilterComboBox.SelectedIndexChanged += delegate
             {
-                if (productsGrid.CurrentRow == null) return;
-                Product product = productsGrid.CurrentRow.DataBoundItem as Product;
-                if (product != null) AddProductToCart(!string.IsNullOrEmpty(product.Barcode) ? product.Barcode : product.Name);
+                if (!refreshingCategories)
+                {
+                    RefreshProducts();
+                }
             };
-            productCard.Controls.Add(productsGrid);
+            productCard.Controls.Add(categoryFilterComboBox);
+
+            productButtonsPanel = new FlowLayoutPanel();
+            productButtonsPanel.Left = 18;
+            productButtonsPanel.Top = 160;
+            productButtonsPanel.Width = 640;
+            productButtonsPanel.Height = 470;
+            productButtonsPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            productButtonsPanel.AutoScroll = true;
+            productButtonsPanel.BackColor = Color.White;
+            productButtonsPanel.Padding = new Padding(2);
+            productCard.Controls.Add(productButtonsPanel);
 
             Panel checkoutCard = UiTheme.CardPanel();
             checkoutCard.Dock = DockStyle.Fill;
@@ -700,8 +715,14 @@ namespace OlyDrugstorePOS
 
         private void RefreshProducts()
         {
+            RefreshCategories();
+
             List<Product> products = store.Database.Products
                 .Where(p => p.StoreId == activeStoreId)
+                .Where(p => categoryFilterComboBox == null ||
+                            categoryFilterComboBox.SelectedItem == null ||
+                            categoryFilterComboBox.SelectedItem.ToString() == "All" ||
+                            p.Category == categoryFilterComboBox.SelectedItem.ToString())
                 .Where(p => searchTextBox == null ||
                             string.IsNullOrEmpty(searchTextBox.Text) ||
                             p.Name.ToLowerInvariant().Contains(searchTextBox.Text.ToLowerInvariant()) ||
@@ -710,11 +731,9 @@ namespace OlyDrugstorePOS
                 .OrderBy(p => p.Name)
                 .ToList();
 
-            if (productsGrid != null)
+            if (productButtonsPanel != null)
             {
-                productsGrid.DataSource = null;
-                productsGrid.DataSource = products;
-                FormatProductsGrid(productsGrid, false);
+                RenderProductButtons(products);
             }
 
             if (stockGrid != null)
@@ -723,6 +742,110 @@ namespace OlyDrugstorePOS
                 stockGrid.DataSource = products.ToList();
                 FormatProductsGrid(stockGrid, true);
             }
+        }
+
+        private void RefreshCategories()
+        {
+            if (categoryFilterComboBox == null)
+            {
+                return;
+            }
+
+            string current = categoryFilterComboBox.SelectedItem == null ? "All" : categoryFilterComboBox.SelectedItem.ToString();
+            List<string> categories = store.Database.Products
+                .Where(p => p.StoreId == activeStoreId)
+                .Select(p => p.Category)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
+
+            refreshingCategories = true;
+            try
+            {
+                categoryFilterComboBox.Items.Clear();
+                categoryFilterComboBox.Items.Add("All");
+                foreach (string category in categories)
+                {
+                    categoryFilterComboBox.Items.Add(category);
+                }
+
+                if (categoryFilterComboBox.Items.Contains(current))
+                {
+                    categoryFilterComboBox.SelectedItem = current;
+                }
+                else
+                {
+                    categoryFilterComboBox.SelectedIndex = 0;
+                }
+            }
+            finally
+            {
+                refreshingCategories = false;
+            }
+        }
+
+        private void RenderProductButtons(List<Product> products)
+        {
+            productButtonsPanel.SuspendLayout();
+            productButtonsPanel.Controls.Clear();
+
+            foreach (Product product in products)
+            {
+                Button button = new Button();
+                button.Width = 190;
+                button.Height = 112;
+                button.Margin = new Padding(8);
+                button.FlatStyle = FlatStyle.Flat;
+                button.FlatAppearance.BorderColor = UiTheme.Border;
+                button.BackColor = product.Quantity <= product.MinimumQuantity
+                    ? Color.FromArgb(255, 247, 237)
+                    : Color.FromArgb(248, 250, 252);
+                button.ForeColor = UiTheme.Text;
+                button.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+                button.TextAlign = ContentAlignment.MiddleLeft;
+                button.Text =
+                    product.Category + "\n" +
+                    product.Name + "\n" +
+                    product.SalePrice.ToString("0.000") + " DT  | Qty " + product.Quantity;
+                button.Tag = product;
+                button.Click += delegate(object sender, EventArgs e)
+                {
+                    Button source = sender as Button;
+                    Product selected = source == null ? null : source.Tag as Product;
+                    if (selected != null)
+                    {
+                        AddProductToCart(!string.IsNullOrEmpty(selected.Barcode) ? selected.Barcode : selected.Name);
+                    }
+                };
+                productButtonsPanel.Controls.Add(button);
+            }
+
+            productButtonsPanel.ResumeLayout();
+        }
+
+        private void HandleSearchChanged()
+        {
+            if (suppressSearchAutoAdd)
+            {
+                return;
+            }
+
+            string query = searchTextBox.Text.Trim();
+            if (query.Length >= 6)
+            {
+                Product exact = store.Database.Products.FirstOrDefault(p =>
+                    p.StoreId == activeStoreId &&
+                    !string.IsNullOrEmpty(p.Barcode) &&
+                    p.Barcode == query);
+
+                if (exact != null)
+                {
+                    AddProductToCart(query);
+                    return;
+                }
+            }
+
+            RefreshProducts();
         }
 
         private void AddProductToCart(string query)
@@ -749,7 +872,10 @@ namespace OlyDrugstorePOS
                 });
             }
 
+            suppressSearchAutoAdd = true;
             searchTextBox.Text = "";
+            suppressSearchAutoAdd = false;
+            RefreshProducts();
             RefreshCart();
         }
 
