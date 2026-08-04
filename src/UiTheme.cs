@@ -33,10 +33,11 @@ namespace OlyDrugstorePOS
             label.Text = text;
             label.Left = left;
             label.Top = top;
-            label.Width = 220;
-            label.Height = 22;
+            label.Width = 190;
+            label.Height = 28;
             label.ForeColor = Muted;
             label.Font = FontBold;
+            label.TextAlign = ContentAlignment.MiddleLeft;
             return label;
         }
 

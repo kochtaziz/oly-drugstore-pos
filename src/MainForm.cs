@@ -386,16 +386,16 @@ namespace OlyDrugstorePOS
             productCategoryInput = AddTextField(form, "productCategoryLabel", 22, 142, 360);
             barcodeInput = AddTextField(form, "barcodeLabel", 22, 208, 360);
             purchasePriceInput = AddMoneyField(form, "purchaseLabel", 22, 274);
-            salePriceInput = AddMoneyField(form, "salePriceLabel", 204, 274);
+            salePriceInput = AddMoneyField(form, "salePriceLabel", 245, 274);
             taxInput = AddMoneyField(form, "taxLabel", 22, 340);
-            quantityInput = AddNumberField(form, "quantityLabel", 204, 340);
+            quantityInput = AddNumberField(form, "quantityLabel", 245, 340);
             minimumInput = AddNumberField(form, "minimumLabel", 22, 406);
 
-            AddLabel(form, "expiryLabel", Localization.T("Expiry"), 204, 406);
+            AddLabel(form, "expiryLabel", Localization.T("Expiry"), 245, 406);
             expiryInput = new DateTimePicker();
-            expiryInput.Left = 204;
+            expiryInput.Left = 245;
             expiryInput.Top = 432;
-            expiryInput.Width = 180;
+            expiryInput.Width = 160;
             form.Controls.Add(expiryInput);
 
             AddLabel(form, "storeFieldLabel", "Store", 22, 472);

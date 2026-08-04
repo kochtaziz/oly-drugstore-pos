@@ -49,10 +49,12 @@ namespace OlyDrugstorePOS
             Label logo = new Label();
             logo.Text = "OLY";
             logo.ForeColor = Color.White;
-            logo.Font = new Font("Segoe UI", 30, FontStyle.Bold);
+            logo.Font = new Font("Segoe UI", 34, FontStyle.Bold);
             logo.Left = 30;
-            logo.Top = 38;
-            logo.Width = 220;
+            logo.Top = 28;
+            logo.Width = 240;
+            logo.Height = 72;
+            logo.TextAlign = ContentAlignment.MiddleLeft;
             brandPanel.Controls.Add(logo);
 
             Label subtitle = new Label();
@@ -85,8 +87,10 @@ namespace OlyDrugstorePOS
             title.ForeColor = UiTheme.Text;
             title.Font = UiTheme.FontTitle;
             title.Left = 36;
-            title.Top = 34;
+            title.Top = 28;
             title.Width = 260;
+            title.Height = 58;
+            title.TextAlign = ContentAlignment.MiddleLeft;
             formCard.Controls.Add(title);
 
             languageComboBox = new ComboBox();
@@ -94,7 +98,7 @@ namespace OlyDrugstorePOS
             languageComboBox.Items.AddRange(new object[] { "FR", "EN" });
             languageComboBox.SelectedItem = Localization.Language;
             languageComboBox.Left = 300;
-            languageComboBox.Top = 38;
+            languageComboBox.Top = 44;
             languageComboBox.Width = 74;
             languageComboBox.SelectedIndexChanged += delegate
             {
