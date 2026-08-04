@@ -36,6 +36,7 @@ namespace OlyDrugstorePOS
             Fr["Minimum"] = "Minimum";
             Fr["Expiry"] = "Expiration";
             Fr["SaveProduct"] = "Enregistrer produit";
+            Fr["DeleteProduct"] = "Supprimer produit";
             Fr["OpenShift"] = "Ouvrir caisse";
             Fr["CloseShift"] = "Fermer caisse";
             Fr["Withdrawal"] = "Sortie de caisse";
@@ -79,6 +80,7 @@ namespace OlyDrugstorePOS
             En["Minimum"] = "Minimum";
             En["Expiry"] = "Expiry";
             En["SaveProduct"] = "Save product";
+            En["DeleteProduct"] = "Delete product";
             En["OpenShift"] = "Open shift";
             En["CloseShift"] = "Close shift";
             En["Withdrawal"] = "Withdrawal";

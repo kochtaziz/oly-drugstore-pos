@@ -75,45 +75,64 @@ namespace OlyDrugstorePOS
             tabs.Padding = new Point(18, 8);
             Controls.Add(tabs);
 
-            BuildSalesTab();
-            BuildProductsTab();
-            BuildCashTab();
-            BuildReportsTab();
+            if (user.Role == UserRole.Admin)
+            {
+                BuildProductsTab();
+            }
+            else
+            {
+                BuildSalesTab();
+                BuildCashTab();
+                BuildReportsTab();
+            }
             BuildSettingsTab();
             RefreshText();
         }
 
         private Control BuildTopBar()
         {
-            Panel top = new Panel();
+            TableLayoutPanel top = new TableLayoutPanel();
             top.Dock = DockStyle.Top;
             top.Height = 74;
             top.BackColor = UiTheme.Primary;
+            top.ColumnCount = 4;
+            top.RowCount = 1;
+            top.Padding = new Padding(22, 10, 22, 10);
+            top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38));
+            top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280));
+            top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
+            top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62));
+
+            Panel brand = new Panel();
+            brand.Dock = DockStyle.Fill;
+            brand.BackColor = UiTheme.Primary;
+            top.Controls.Add(brand, 0, 0);
 
             Label logo = new Label();
-            logo.Text = "OLY Drugstore";
+            logo.Text = "OLY Drugstore POS";
             logo.ForeColor = Color.White;
             logo.Font = new Font("Segoe UI", 18, FontStyle.Bold);
-            logo.Left = 22;
-            logo.Top = 16;
-            logo.Width = 260;
-            top.Controls.Add(logo);
+            logo.Left = 0;
+            logo.Top = 2;
+            logo.Width = 360;
+            logo.Height = 28;
+            brand.Controls.Add(logo);
 
             Label userLabel = new Label();
             userLabel.Text = user.FullName + "  |  " + user.Role;
             userLabel.ForeColor = Color.FromArgb(203, 213, 225);
             userLabel.Font = UiTheme.FontSmall;
-            userLabel.Left = 24;
-            userLabel.Top = 48;
+            userLabel.Left = 2;
+            userLabel.Top = 34;
             userLabel.Width = 360;
-            top.Controls.Add(userLabel);
+            userLabel.Height = 18;
+            brand.Controls.Add(userLabel);
 
             storeComboBox = new ComboBox();
             storeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             storeComboBox.Font = UiTheme.FontBold;
-            storeComboBox.Left = 430;
-            storeComboBox.Top = 20;
-            storeComboBox.Width = 260;
+            storeComboBox.Dock = DockStyle.Fill;
+            storeComboBox.Margin = new Padding(8, 14, 8, 10);
             foreach (Store item in store.Database.Stores)
             {
                 storeComboBox.Items.Add(item.Id + " - " + item.Name);
@@ -124,33 +143,29 @@ namespace OlyDrugstorePOS
                 activeStoreId = store.Database.Stores[storeComboBox.SelectedIndex].Id;
                 RefreshAll();
             };
-            top.Controls.Add(storeComboBox);
+            top.Controls.Add(storeComboBox, 1, 0);
 
             languageComboBox = new ComboBox();
             languageComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             languageComboBox.Font = UiTheme.FontBold;
             languageComboBox.Items.AddRange(new object[] { "FR", "EN" });
             languageComboBox.SelectedItem = Localization.Language;
-            languageComboBox.Left = 710;
-            languageComboBox.Top = 20;
-            languageComboBox.Width = 90;
+            languageComboBox.Dock = DockStyle.Fill;
+            languageComboBox.Margin = new Padding(8, 14, 8, 10);
             languageComboBox.SelectedIndexChanged += delegate
             {
                 Localization.Language = languageComboBox.SelectedItem.ToString();
                 RefreshText();
             };
-            top.Controls.Add(languageComboBox);
+            top.Controls.Add(languageComboBox, 2, 0);
 
             sessionSummaryLabel = new Label();
             sessionSummaryLabel.ForeColor = Color.White;
             sessionSummaryLabel.Font = UiTheme.FontBold;
             sessionSummaryLabel.TextAlign = ContentAlignment.MiddleRight;
-            sessionSummaryLabel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            sessionSummaryLabel.Left = 830;
-            sessionSummaryLabel.Top = 20;
-            sessionSummaryLabel.Width = 320;
-            sessionSummaryLabel.Height = 30;
-            top.Controls.Add(sessionSummaryLabel);
+            sessionSummaryLabel.Dock = DockStyle.Fill;
+            sessionSummaryLabel.Margin = new Padding(8, 13, 0, 8);
+            top.Controls.Add(sessionSummaryLabel, 3, 0);
 
             return top;
         }
@@ -348,11 +363,20 @@ namespace OlyDrugstorePOS
             Button save = UiTheme.PrimaryButton(Localization.T("SaveProduct"));
             save.Name = "saveProductButton";
             save.Left = 22;
-            save.Top = 568;
+            save.Top = 548;
             save.Width = 362;
             save.Height = 54;
             save.Click += delegate { SaveProduct(); };
             form.Controls.Add(save);
+
+            Button delete = UiTheme.SecondaryButton(Localization.T("DeleteProduct"));
+            delete.Name = "deleteProductButton";
+            delete.Left = 22;
+            delete.Top = 612;
+            delete.Width = 362;
+            delete.Height = 46;
+            delete.Click += delegate { DeleteSelectedProduct(); };
+            form.Controls.Add(delete);
         }
 
         private void BuildCashTab()
@@ -592,11 +616,11 @@ namespace OlyDrugstorePOS
 
         private void RefreshText()
         {
-            tabs.TabPages["salesTab"].Text = Localization.T("Sales");
-            tabs.TabPages["productsTab"].Text = Localization.T("Products");
-            tabs.TabPages["cashTab"].Text = Localization.T("Cash");
-            tabs.TabPages["reportsTab"].Text = Localization.T("Reports");
-            tabs.TabPages["settingsTab"].Text = Localization.T("Settings");
+            if (tabs.TabPages.ContainsKey("salesTab")) tabs.TabPages["salesTab"].Text = Localization.T("Sales");
+            if (tabs.TabPages.ContainsKey("productsTab")) tabs.TabPages["productsTab"].Text = Localization.T("Products");
+            if (tabs.TabPages.ContainsKey("cashTab")) tabs.TabPages["cashTab"].Text = Localization.T("Cash");
+            if (tabs.TabPages.ContainsKey("reportsTab")) tabs.TabPages["reportsTab"].Text = Localization.T("Reports");
+            if (tabs.TabPages.ContainsKey("settingsTab")) tabs.TabPages["settingsTab"].Text = Localization.T("Settings");
 
             SetText("addButton", Localization.T("Add"));
             SetText("removeButton", Localization.T("Remove"));
@@ -617,6 +641,7 @@ namespace OlyDrugstorePOS
             SetText("minimumLabel", Localization.T("Minimum"));
             SetText("expiryLabel", Localization.T("Expiry"));
             SetText("saveProductButton", Localization.T("SaveProduct"));
+            SetText("deleteProductButton", Localization.T("DeleteProduct"));
             SetText("openShiftButton", Localization.T("OpenShift"));
             SetText("closeShiftButton", Localization.T("CloseShift"));
             SetText("addMovementButton", Localization.T("Add"));
@@ -646,10 +671,17 @@ namespace OlyDrugstorePOS
                 .OrderBy(p => p.Name)
                 .ToList();
 
-            productsGrid.DataSource = null;
-            productsGrid.DataSource = products;
-            stockGrid.DataSource = null;
-            stockGrid.DataSource = products.ToList();
+            if (productsGrid != null)
+            {
+                productsGrid.DataSource = null;
+                productsGrid.DataSource = products;
+            }
+
+            if (stockGrid != null)
+            {
+                stockGrid.DataSource = null;
+                stockGrid.DataSource = products.ToList();
+            }
         }
 
         private void AddProductToCart(string query)
@@ -706,7 +738,8 @@ namespace OlyDrugstorePOS
                 cartGrid.DataSource = cart.ToList();
             }
 
-            decimal total = Math.Max(0, cart.Sum(i => i.LineTotal) - saleDiscountInput.Value);
+            decimal discount = saleDiscountInput != null ? saleDiscountInput.Value : 0;
+            decimal total = Math.Max(0, cart.Sum(i => i.LineTotal) - discount);
             if (totalLabel != null) totalLabel.Text = Localization.T("Total") + ": " + total.ToString("0.000") + " DT";
         }
 
@@ -785,6 +818,31 @@ namespace OlyDrugstorePOS
             RefreshAll();
         }
 
+        private void DeleteSelectedProduct()
+        {
+            if (selectedProduct == null)
+            {
+                MessageBox.Show("Select a product first");
+                return;
+            }
+
+            DialogResult result = MessageBox.Show(
+                "Delete product: " + selectedProduct.Name + "?",
+                Localization.T("DeleteProduct"),
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
+            store.DeleteProduct(selectedProduct);
+            selectedProduct = null;
+            ClearProductForm();
+            RefreshAll();
+        }
+
         private void ClearProductForm()
         {
             productNameInput.Text = "";
@@ -829,6 +887,12 @@ namespace OlyDrugstorePOS
 
         private void RefreshCash()
         {
+            if (cashStatusLabel == null || cashKpiLabel == null)
+            {
+                if (sessionSummaryLabel != null) sessionSummaryLabel.Text = user.Role == UserRole.Admin ? "Gestion produits" : "";
+                return;
+            }
+
             CashSession session = store.GetOpenSession(user.Username);
             if (session == null)
             {

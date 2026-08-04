@@ -186,6 +186,17 @@ namespace OlyDrugstorePOS
             Save();
         }
 
+        public void DeleteProduct(Product product)
+        {
+            if (product == null)
+            {
+                return;
+            }
+
+            Database.Products.RemoveAll(p => p.Id == product.Id);
+            Save();
+        }
+
         public decimal CashSalesForSession(CashSession session)
         {
             return Database.Sales
