@@ -28,7 +28,7 @@ namespace OlyDrugstorePOS
             Fr["Decrease"] = "- Quantite";
             Fr["ClearCart"] = "Vider ticket";
             Fr["Checkout"] = "Encaisser";
-            Fr["PrintTicket"] = "Imprimer ticket";
+            Fr["PrintTicket"] = "Imprimer";
             Fr["Name"] = "Nom";
             Fr["Category"] = "Categorie";
             Fr["Barcode"] = "Code a barres";
@@ -75,7 +75,7 @@ namespace OlyDrugstorePOS
             En["Decrease"] = "- Quantity";
             En["ClearCart"] = "Clear ticket";
             En["Checkout"] = "Checkout";
-            En["PrintTicket"] = "Print ticket";
+            En["PrintTicket"] = "Print";
             En["Name"] = "Name";
             En["Category"] = "Category";
             En["Barcode"] = "Barcode";

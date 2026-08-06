@@ -24,6 +24,7 @@ namespace OlyDrugstorePOS
         private DataGridView cartGrid;
         private Label totalLabel;
         private Label sessionSummaryLabel;
+        private NumericUpDown addQuantityInput;
         private NumericUpDown saleDiscountInput;
         private ComboBox paymentComboBox;
         private CheckBox employeeDiscountCheckBox;
@@ -33,6 +34,8 @@ namespace OlyDrugstorePOS
         private Button increaseQuantityButton;
         private Button decreaseQuantityButton;
         private Button clearCartButton;
+        private Button printReceiptButton;
+        private Sale lastCompletedSale;
         private bool suppressSearchAutoAdd;
         private bool refreshingCategories;
 
@@ -199,7 +202,7 @@ namespace OlyDrugstorePOS
             scannerLabel.Width = 260;
             productCard.Controls.Add(scannerLabel);
 
-            searchTextBox = UiTheme.TextInput(18, 84, 390);
+            searchTextBox = UiTheme.TextInput(18, 84, 300);
             searchTextBox.Font = new Font("Segoe UI", 16, FontStyle.Bold);
             searchTextBox.TextChanged += delegate { HandleSearchChanged(); };
             searchTextBox.KeyDown += delegate(object sender, KeyEventArgs e)
@@ -212,21 +215,36 @@ namespace OlyDrugstorePOS
             };
             productCard.Controls.Add(searchTextBox);
 
+            AddLabel(productCard, "addQuantityLabel", Localization.T("Quantity"), 330, 52);
+            addQuantityInput = new NumericUpDown();
+            addQuantityInput.Minimum = 1;
+            addQuantityInput.Maximum = 999;
+            addQuantityInput.Value = 1;
+            addQuantityInput.Left = 330;
+            addQuantityInput.Top = 84;
+            addQuantityInput.Width = 80;
+            addQuantityInput.Height = 42;
+            addQuantityInput.Font = new Font("Segoe UI", 16, FontStyle.Bold);
+            productCard.Controls.Add(addQuantityInput);
+
             Button addButton = UiTheme.PrimaryButton(Localization.T("Add"));
             addButton.Name = "addButton";
-            addButton.Left = 425;
+            addButton.Left = 430;
             addButton.Top = 84;
-            addButton.Width = 150;
+            addButton.Width = 175;
             addButton.Height = 42;
             addButton.Click += delegate { AddProductToCart(searchTextBox.Text); };
             productCard.Controls.Add(addButton);
 
             categoryFilterComboBox = new ComboBox();
             categoryFilterComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            categoryFilterComboBox.Font = UiTheme.FontBold;
+            categoryFilterComboBox.Font = new Font("Segoe UI", 13, FontStyle.Bold);
+            categoryFilterComboBox.IntegralHeight = false;
+            categoryFilterComboBox.DropDownHeight = 260;
+            categoryFilterComboBox.ItemHeight = 24;
             categoryFilterComboBox.Left = 18;
             categoryFilterComboBox.Top = 144;
-            categoryFilterComboBox.Width = 240;
+            categoryFilterComboBox.Width = 300;
             categoryFilterComboBox.SelectedIndexChanged += delegate
             {
                 if (!refreshingCategories)
@@ -258,14 +276,14 @@ namespace OlyDrugstorePOS
             cartGrid.Left = 18;
             cartGrid.Top = 56;
             cartGrid.Width = 410;
-            cartGrid.Height = 220;
+            cartGrid.Height = 160;
             cartGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             checkoutCard.Controls.Add(cartGrid);
 
             Button removeButton = UiTheme.SecondaryButton(Localization.T("Remove"));
             removeButton.Name = "removeButton";
             removeButton.Left = 18;
-            removeButton.Top = 292;
+            removeButton.Top = 234;
             removeButton.Width = 96;
             removeButton.Height = 42;
             removeButton.Click += delegate { RemoveSelectedCartItem(); };
@@ -274,7 +292,7 @@ namespace OlyDrugstorePOS
             decreaseQuantityButton = UiTheme.SecondaryButton(Localization.T("Decrease"));
             decreaseQuantityButton.Name = "decreaseQuantityButton";
             decreaseQuantityButton.Left = 122;
-            decreaseQuantityButton.Top = 292;
+            decreaseQuantityButton.Top = 234;
             decreaseQuantityButton.Width = 92;
             decreaseQuantityButton.Height = 42;
             decreaseQuantityButton.Click += delegate { ChangeSelectedQuantity(-1); };
@@ -283,7 +301,7 @@ namespace OlyDrugstorePOS
             increaseQuantityButton = UiTheme.SecondaryButton(Localization.T("Increase"));
             increaseQuantityButton.Name = "increaseQuantityButton";
             increaseQuantityButton.Left = 222;
-            increaseQuantityButton.Top = 292;
+            increaseQuantityButton.Top = 234;
             increaseQuantityButton.Width = 92;
             increaseQuantityButton.Height = 42;
             increaseQuantityButton.Click += delegate { ChangeSelectedQuantity(1); };
@@ -292,7 +310,7 @@ namespace OlyDrugstorePOS
             clearCartButton = UiTheme.SecondaryButton(Localization.T("ClearCart"));
             clearCartButton.Name = "clearCartButton";
             clearCartButton.Left = 322;
-            clearCartButton.Top = 292;
+            clearCartButton.Top = 234;
             clearCartButton.Width = 116;
             clearCartButton.Height = 42;
             clearCartButton.Click += delegate { cart.Clear(); RefreshCart(); };
@@ -301,43 +319,43 @@ namespace OlyDrugstorePOS
             employeeDiscountCheckBox = new CheckBox();
             employeeDiscountCheckBox.Name = "employeeDiscountCheckBox";
             employeeDiscountCheckBox.Left = 18;
-            employeeDiscountCheckBox.Top = 342;
+            employeeDiscountCheckBox.Top = 284;
             employeeDiscountCheckBox.Width = 230;
             employeeDiscountCheckBox.Font = UiTheme.FontBold;
             employeeDiscountCheckBox.CheckedChanged += delegate { ApplyEmployeeDiscount(); };
             checkoutCard.Controls.Add(employeeDiscountCheckBox);
 
-            AddLabel(checkoutCard, "discountLabel", Localization.T("Discount"), 18, 374);
+            AddLabel(checkoutCard, "discountLabel", Localization.T("Discount"), 18, 316);
             saleDiscountInput = MoneyInput();
             saleDiscountInput.Left = 18;
-            saleDiscountInput.Top = 400;
+            saleDiscountInput.Top = 342;
             saleDiscountInput.Width = 130;
             saleDiscountInput.ValueChanged += delegate { RefreshCart(); };
             checkoutCard.Controls.Add(saleDiscountInput);
 
-            AddLabel(checkoutCard, "paymentLabel", Localization.T("Payment"), 150, 374);
+            AddLabel(checkoutCard, "paymentLabel", Localization.T("Payment"), 150, 316);
             paymentComboBox = new ComboBox();
             paymentComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             paymentComboBox.Items.AddRange(new object[] { "Cash", "Card", "Online", "In store" });
             paymentComboBox.SelectedIndex = 0;
             paymentComboBox.Left = 150;
-            paymentComboBox.Top = 400;
+            paymentComboBox.Top = 342;
             paymentComboBox.Width = 130;
             checkoutCard.Controls.Add(paymentComboBox);
 
-            returnCheckBox = Check(Localization.T("Return"), "returnCheckBox", 250, 342);
+            returnCheckBox = Check(Localization.T("Return"), "returnCheckBox", 250, 284);
             checkoutCard.Controls.Add(returnCheckBox);
 
-            debtCheckBox = Check(Localization.T("Debt"), "debtCheckBox", 340, 342);
+            debtCheckBox = Check(Localization.T("Debt"), "debtCheckBox", 340, 284);
             checkoutCard.Controls.Add(debtCheckBox);
 
-            AddLabel(checkoutCard, "customerLabel", Localization.T("Customer"), 300, 374);
-            customerTextBox = UiTheme.TextInput(300, 400, 135);
+            AddLabel(checkoutCard, "customerLabel", Localization.T("Customer"), 300, 316);
+            customerTextBox = UiTheme.TextInput(300, 342, 135);
             checkoutCard.Controls.Add(customerTextBox);
 
             totalLabel = new Label();
             totalLabel.Left = 18;
-            totalLabel.Top = 428;
+            totalLabel.Top = 372;
             totalLabel.Width = 410;
             totalLabel.Height = 36;
             totalLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -348,13 +366,22 @@ namespace OlyDrugstorePOS
             Button checkoutButton = UiTheme.PrimaryButton(Localization.T("Checkout"));
             checkoutButton.Name = "checkoutButton";
             checkoutButton.Left = 18;
-            checkoutButton.Top = 465;
+            checkoutButton.Top = 410;
             checkoutButton.Width = 410;
             checkoutButton.Height = 48;
-            checkoutButton.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             checkoutButton.Font = new Font("Segoe UI", 16, FontStyle.Bold);
             checkoutButton.Click += delegate { Checkout(); };
             checkoutCard.Controls.Add(checkoutButton);
+
+            printReceiptButton = UiTheme.SecondaryButton(Localization.T("PrintTicket"));
+            printReceiptButton.Name = "printReceiptButton";
+            printReceiptButton.Left = 18;
+            printReceiptButton.Top = 466;
+            printReceiptButton.Width = 410;
+            printReceiptButton.Height = 44;
+            printReceiptButton.Font = new Font("Segoe UI", 13, FontStyle.Bold);
+            printReceiptButton.Click += delegate { PrintLastReceipt(); };
+            checkoutCard.Controls.Add(printReceiptButton);
         }
 
         private void BuildProductsTab()
@@ -686,11 +713,13 @@ namespace OlyDrugstorePOS
             if (tabs.TabPages.ContainsKey("settingsTab")) tabs.TabPages["settingsTab"].Text = Localization.T("Settings");
 
             SetText("addButton", Localization.T("Add"));
+            SetText("addQuantityLabel", Localization.T("Quantity"));
             SetText("removeButton", Localization.T("Remove"));
             SetText("increaseQuantityButton", Localization.T("Increase"));
             SetText("decreaseQuantityButton", Localization.T("Decrease"));
             SetText("clearCartButton", Localization.T("ClearCart"));
             SetText("checkoutButton", Localization.T("Checkout"));
+            SetText("printReceiptButton", Localization.T("PrintTicket"));
             SetText("discountLabel", Localization.T("Discount"));
             SetText("employeeDiscountCheckBox", Localization.T("EmployeeDiscount"));
             SetText("paymentLabel", Localization.T("Payment"));
@@ -875,15 +904,16 @@ namespace OlyDrugstorePOS
                 return;
             }
 
+            int quantityToAdd = addQuantityInput == null ? 1 : (int)addQuantityInput.Value;
             SaleItem existing = cart.FirstOrDefault(i => i.ProductId == product.Id);
-            if (existing != null) existing.Quantity++;
+            if (existing != null) existing.Quantity += quantityToAdd;
             else
             {
                 cart.Add(new SaleItem
                 {
                     ProductId = product.Id,
                     ProductName = product.Name,
-                    Quantity = 1,
+                    Quantity = quantityToAdd,
                     UnitPrice = product.SalePrice,
                     Discount = 0,
                     TaxRate = product.TaxRate
@@ -893,6 +923,7 @@ namespace OlyDrugstorePOS
             suppressSearchAutoAdd = true;
             searchTextBox.Text = "";
             suppressSearchAutoAdd = false;
+            if (addQuantityInput != null) addQuantityInput.Value = 1;
             RefreshProducts();
             RefreshCart();
         }
@@ -968,8 +999,7 @@ namespace OlyDrugstorePOS
                 TaxRate = i.TaxRate
             }).ToList();
 
-            Sale sale = store.SaveSale(user, activeStoreId, items, paymentComboBox.SelectedItem.ToString(), saleDiscountInput.Value, returnCheckBox.Checked, debtCheckBox.Checked, customerTextBox.Text);
-            PrintReceipt(sale);
+            lastCompletedSale = store.SaveSale(user, activeStoreId, items, paymentComboBox.SelectedItem.ToString(), saleDiscountInput.Value, returnCheckBox.Checked, debtCheckBox.Checked, customerTextBox.Text);
 
             cart.Clear();
             saleDiscountInput.Value = 0;
@@ -978,6 +1008,26 @@ namespace OlyDrugstorePOS
             debtCheckBox.Checked = false;
             employeeDiscountCheckBox.Checked = false;
             RefreshAll();
+        }
+
+        private void PrintLastReceipt()
+        {
+            Sale sale = lastCompletedSale;
+            if (sale == null)
+            {
+                sale = store.Database.Sales
+                    .Where(s => s.CashierUsername == user.Username && s.StoreId == activeStoreId)
+                    .OrderByDescending(s => s.CreatedAt)
+                    .FirstOrDefault();
+            }
+
+            if (sale == null)
+            {
+                MessageBox.Show("No completed sale to print");
+                return;
+            }
+
+            PrintReceipt(sale);
         }
 
         private void LoadSelectedProduct()

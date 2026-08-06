@@ -63,6 +63,7 @@ namespace OlyDrugstorePOS
             button.ForeColor = Color.White;
             button.Font = FontBold;
             button.Cursor = Cursors.Hand;
+            button.TextAlign = ContentAlignment.MiddleCenter;
             return button;
         }
 
@@ -77,6 +78,7 @@ namespace OlyDrugstorePOS
             button.ForeColor = Text;
             button.Font = FontBold;
             button.Cursor = Cursors.Hand;
+            button.TextAlign = ContentAlignment.MiddleCenter;
             return button;
         }
 
