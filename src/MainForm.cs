@@ -103,9 +103,9 @@ namespace OlyDrugstorePOS
             top.ColumnCount = 4;
             top.RowCount = 1;
             top.Padding = new Padding(24, 14, 24, 14);
-            top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 360));
-            top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280));
-            top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
+            top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 370));
+            top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
+            top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
             top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
             Panel brand = new Panel();
@@ -119,7 +119,7 @@ namespace OlyDrugstorePOS
             logo.Font = new Font("Segoe UI", 20, FontStyle.Bold);
             logo.Left = 0;
             logo.Top = 4;
-            logo.Width = 350;
+            logo.Width = 360;
             logo.Height = 36;
             logo.TextAlign = ContentAlignment.MiddleLeft;
             brand.Controls.Add(logo);
@@ -130,7 +130,7 @@ namespace OlyDrugstorePOS
             userLabel.Font = UiTheme.FontSmall;
             userLabel.Left = 2;
             userLabel.Top = 46;
-            userLabel.Width = 350;
+            userLabel.Width = 360;
             userLabel.Height = 22;
             userLabel.TextAlign = ContentAlignment.MiddleLeft;
             brand.Controls.Add(userLabel);
@@ -194,7 +194,12 @@ namespace OlyDrugstorePOS
             Label productTitle = CardTitle("Catalogue / Scanner", 18, 14);
             productCard.Controls.Add(productTitle);
 
-            searchTextBox = UiTheme.TextInput(18, 56, 420);
+            Label scannerLabel = UiTheme.FieldLabel("Scanner / code a barres", 18, 52);
+            scannerLabel.Name = "scannerLabel";
+            scannerLabel.Width = 260;
+            productCard.Controls.Add(scannerLabel);
+
+            searchTextBox = UiTheme.TextInput(18, 84, 390);
             searchTextBox.Font = new Font("Segoe UI", 16, FontStyle.Bold);
             searchTextBox.TextChanged += delegate { HandleSearchChanged(); };
             searchTextBox.KeyDown += delegate(object sender, KeyEventArgs e)
@@ -209,8 +214,8 @@ namespace OlyDrugstorePOS
 
             Button addButton = UiTheme.PrimaryButton(Localization.T("Add"));
             addButton.Name = "addButton";
-            addButton.Left = 455;
-            addButton.Top = 56;
+            addButton.Left = 425;
+            addButton.Top = 84;
             addButton.Width = 150;
             addButton.Height = 42;
             addButton.Click += delegate { AddProductToCart(searchTextBox.Text); };
@@ -220,7 +225,7 @@ namespace OlyDrugstorePOS
             categoryFilterComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             categoryFilterComboBox.Font = UiTheme.FontBold;
             categoryFilterComboBox.Left = 18;
-            categoryFilterComboBox.Top = 112;
+            categoryFilterComboBox.Top = 144;
             categoryFilterComboBox.Width = 240;
             categoryFilterComboBox.SelectedIndexChanged += delegate
             {
@@ -233,10 +238,10 @@ namespace OlyDrugstorePOS
 
             productButtonsPanel = new FlowLayoutPanel();
             productButtonsPanel.Left = 18;
-            productButtonsPanel.Top = 160;
-            productButtonsPanel.Width = 640;
-            productButtonsPanel.Height = 345;
-            productButtonsPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            productButtonsPanel.Top = 194;
+            productButtonsPanel.Width = 570;
+            productButtonsPanel.Height = 310;
+            productButtonsPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
             productButtonsPanel.AutoScroll = true;
             productButtonsPanel.BackColor = Color.White;
             productButtonsPanel.Padding = new Padding(2);
@@ -384,11 +389,11 @@ namespace OlyDrugstorePOS
             productNameInput = AddTextField(form, "productNameLabel", 22, 76, 360);
             productCategoryInput = AddTextField(form, "productCategoryLabel", 22, 142, 360);
             barcodeInput = AddTextField(form, "barcodeLabel", 22, 208, 360);
-            purchasePriceInput = AddMoneyField(form, "purchaseLabel", 22, 274);
-            salePriceInput = AddMoneyField(form, "salePriceLabel", 245, 274);
-            taxInput = AddMoneyField(form, "taxLabel", 22, 340);
-            quantityInput = AddNumberField(form, "quantityLabel", 167, 340);
-            minimumInput = AddNumberField(form, "minimumLabel", 312, 340);
+            purchasePriceInput = AddMoneyField(form, "purchaseLabel", 22, 274, 175);
+            salePriceInput = AddMoneyField(form, "salePriceLabel", 245, 274, 175);
+            taxInput = AddMoneyField(form, "taxLabel", 22, 340, 125);
+            quantityInput = AddNumberField(form, "quantityLabel", 165, 340, 125);
+            minimumInput = AddNumberField(form, "minimumLabel", 308, 340, 125);
 
             AddLabel(form, "expiryLabel", Localization.T("Expiry"), 22, 406);
             expiryInput = new DateTimePicker();
@@ -615,16 +620,26 @@ namespace OlyDrugstorePOS
 
         private NumericUpDown AddMoneyField(Control parent, string labelName, int left, int top)
         {
+            return AddMoneyField(parent, labelName, left, top, 150);
+        }
+
+        private NumericUpDown AddMoneyField(Control parent, string labelName, int left, int top, int width)
+        {
             AddLabel(parent, labelName, "", left, top);
             NumericUpDown input = MoneyInput();
             input.Left = left;
             input.Top = top + 26;
-            input.Width = 150;
+            input.Width = width;
             parent.Controls.Add(input);
             return input;
         }
 
         private NumericUpDown AddNumberField(Control parent, string labelName, int left, int top)
+        {
+            return AddNumberField(parent, labelName, left, top, 150);
+        }
+
+        private NumericUpDown AddNumberField(Control parent, string labelName, int left, int top, int width)
         {
             AddLabel(parent, labelName, "", left, top);
             NumericUpDown input = new NumericUpDown();
@@ -632,7 +647,7 @@ namespace OlyDrugstorePOS
             input.Maximum = 1000000;
             input.Left = left;
             input.Top = top + 26;
-            input.Width = 150;
+            input.Width = width;
             input.Font = new Font("Segoe UI", 12);
             parent.Controls.Add(input);
             return input;
@@ -794,9 +809,9 @@ namespace OlyDrugstorePOS
             foreach (Product product in products)
             {
                 Button button = new Button();
-                button.Width = 190;
-                button.Height = 112;
-                button.Margin = new Padding(8);
+                button.Width = 245;
+                button.Height = 128;
+                button.Margin = new Padding(10);
                 button.FlatStyle = FlatStyle.Flat;
                 button.FlatAppearance.BorderColor = UiTheme.Border;
                 button.BackColor = product.Quantity <= product.MinimumQuantity
@@ -806,9 +821,10 @@ namespace OlyDrugstorePOS
                 button.Font = new Font("Segoe UI", 10, FontStyle.Bold);
                 button.TextAlign = ContentAlignment.MiddleLeft;
                 button.Text =
-                    product.Category + "\n" +
+                    product.Category.ToUpperInvariant() + "\n\n" +
                     product.Name + "\n" +
-                    product.SalePrice.ToString("0.000") + " DT  | Qty " + product.Quantity;
+                    product.SalePrice.ToString("0.000") + " DT\n" +
+                    "Stock: " + product.Quantity;
                 button.Tag = product;
                 button.Click += delegate(object sender, EventArgs e)
                 {

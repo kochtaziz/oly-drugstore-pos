@@ -25,9 +25,9 @@ namespace OlyDrugstorePOS
         private void BuildUi()
         {
             Text = "Oly Drugstore POS";
-            Width = 760;
-            Height = 470;
-            MinimumSize = new Size(760, 470);
+            Width = 860;
+            Height = 540;
+            MinimumSize = new Size(860, 540);
             StartPosition = FormStartPosition.CenterScreen;
             BackColor = UiTheme.Background;
             Font = UiTheme.FontNormal;
@@ -36,9 +36,9 @@ namespace OlyDrugstorePOS
             shell.Dock = DockStyle.Fill;
             shell.ColumnCount = 2;
             shell.RowCount = 1;
-            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45));
-            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55));
-            shell.Padding = new Padding(22);
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 56));
+            shell.Padding = new Padding(28);
             Controls.Add(shell);
 
             Panel brandPanel = UiTheme.CardPanel();
@@ -49,11 +49,11 @@ namespace OlyDrugstorePOS
             Label logo = new Label();
             logo.Text = "OLY";
             logo.ForeColor = Color.White;
-            logo.Font = new Font("Segoe UI", 34, FontStyle.Bold);
-            logo.Left = 30;
-            logo.Top = 28;
-            logo.Width = 240;
-            logo.Height = 72;
+            logo.Font = new Font("Segoe UI", 40, FontStyle.Bold);
+            logo.Left = 36;
+            logo.Top = 42;
+            logo.Width = 260;
+            logo.Height = 76;
             logo.TextAlign = ContentAlignment.MiddleLeft;
             brandPanel.Controls.Add(logo);
 
@@ -61,35 +61,35 @@ namespace OlyDrugstorePOS
             subtitle.Text = "Drugstore POS\nStock, caisse et ventes";
             subtitle.ForeColor = Color.FromArgb(210, 232, 255);
             subtitle.Font = new Font("Segoe UI", 13, FontStyle.Bold);
-            subtitle.Left = 34;
-            subtitle.Top = 110;
-            subtitle.Width = 250;
-            subtitle.Height = 80;
+            subtitle.Left = 40;
+            subtitle.Top = 138;
+            subtitle.Width = 270;
+            subtitle.Height = 82;
             brandPanel.Controls.Add(subtitle);
 
             Label note = new Label();
             note.Text = "Mode local hors ligne\nPret pour scanner et ticket";
             note.ForeColor = Color.FromArgb(180, 205, 230);
             note.Font = UiTheme.FontSmall;
-            note.Left = 34;
-            note.Top = 285;
-            note.Width = 260;
-            note.Height = 70;
+            note.Left = 40;
+            note.Top = 330;
+            note.Width = 280;
+            note.Height = 76;
             brandPanel.Controls.Add(note);
 
             Panel formCard = UiTheme.CardPanel();
             formCard.Dock = DockStyle.Fill;
-            formCard.Padding = new Padding(36);
+            formCard.Padding = new Padding(42);
             shell.Controls.Add(formCard, 1, 0);
 
             Label title = new Label();
             title.Text = "Connexion";
             title.ForeColor = UiTheme.Text;
             title.Font = UiTheme.FontTitle;
-            title.Left = 36;
-            title.Top = 28;
-            title.Width = 260;
-            title.Height = 58;
+            title.Left = 42;
+            title.Top = 44;
+            title.Width = 280;
+            title.Height = 64;
             title.TextAlign = ContentAlignment.MiddleLeft;
             formCard.Controls.Add(title);
 
@@ -97,9 +97,9 @@ namespace OlyDrugstorePOS
             languageComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             languageComboBox.Items.AddRange(new object[] { "FR", "EN" });
             languageComboBox.SelectedItem = Localization.Language;
-            languageComboBox.Left = 300;
-            languageComboBox.Top = 44;
-            languageComboBox.Width = 74;
+            languageComboBox.Left = 340;
+            languageComboBox.Top = 62;
+            languageComboBox.Width = 80;
             languageComboBox.SelectedIndexChanged += delegate
             {
                 Localization.Language = languageComboBox.SelectedItem.ToString();
@@ -107,17 +107,17 @@ namespace OlyDrugstorePOS
             };
             formCard.Controls.Add(languageComboBox);
 
-            usernameLabel = UiTheme.FieldLabel(Localization.T("Username"), 36, 112);
+            usernameLabel = UiTheme.FieldLabel(Localization.T("Username"), 42, 134);
             formCard.Controls.Add(usernameLabel);
 
-            usernameTextBox = UiTheme.TextInput(36, 140, 338);
+            usernameTextBox = UiTheme.TextInput(42, 164, 378);
             usernameTextBox.Text = "admin";
             formCard.Controls.Add(usernameTextBox);
 
-            passwordLabel = UiTheme.FieldLabel(Localization.T("Password"), 36, 202);
+            passwordLabel = UiTheme.FieldLabel(Localization.T("Password"), 42, 232);
             formCard.Controls.Add(passwordLabel);
 
-            passwordTextBox = UiTheme.TextInput(36, 230, 338);
+            passwordTextBox = UiTheme.TextInput(42, 262, 378);
             passwordTextBox.PasswordChar = '*';
             passwordTextBox.Text = "admin";
             passwordTextBox.KeyDown += delegate(object sender, KeyEventArgs e)
@@ -130,10 +130,10 @@ namespace OlyDrugstorePOS
             formCard.Controls.Add(passwordTextBox);
 
             signInButton = UiTheme.PrimaryButton(Localization.T("SignIn"));
-            signInButton.Left = 36;
-            signInButton.Top = 306;
-            signInButton.Width = 338;
-            signInButton.Height = 52;
+            signInButton.Left = 42;
+            signInButton.Top = 354;
+            signInButton.Width = 378;
+            signInButton.Height = 56;
             signInButton.Click += delegate { SignIn(); };
             formCard.Controls.Add(signInButton);
         }
