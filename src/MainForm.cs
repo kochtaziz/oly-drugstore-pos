@@ -20,7 +20,7 @@ namespace OlyDrugstorePOS
         private ComboBox languageComboBox;
         private TextBox searchTextBox;
         private FlowLayoutPanel productButtonsPanel;
-        private ComboBox categoryFilterComboBox;
+        private FlowLayoutPanel categoryButtonsPanel;
         private DataGridView cartGrid;
         private Label totalLabel;
         private Label sessionSummaryLabel;
@@ -36,6 +36,7 @@ namespace OlyDrugstorePOS
         private Button clearCartButton;
         private Button printReceiptButton;
         private Sale lastCompletedSale;
+        private string activeCategory = "All";
         private bool suppressSearchAutoAdd;
         private bool refreshingCategories;
 
@@ -202,7 +203,7 @@ namespace OlyDrugstorePOS
             scannerLabel.Width = 260;
             productCard.Controls.Add(scannerLabel);
 
-            searchTextBox = UiTheme.TextInput(18, 84, 300);
+            searchTextBox = UiTheme.TextInput(18, 84, 250);
             searchTextBox.Font = new Font("Segoe UI", 16, FontStyle.Bold);
             searchTextBox.TextChanged += delegate { HandleSearchChanged(); };
             searchTextBox.KeyDown += delegate(object sender, KeyEventArgs e)
@@ -215,50 +216,62 @@ namespace OlyDrugstorePOS
             };
             productCard.Controls.Add(searchTextBox);
 
-            AddLabel(productCard, "addQuantityLabel", Localization.T("Quantity"), 330, 52);
+            AddLabel(productCard, "addQuantityLabel", Localization.T("Quantity"), 290, 52);
             addQuantityInput = new NumericUpDown();
             addQuantityInput.Minimum = 1;
             addQuantityInput.Maximum = 999;
             addQuantityInput.Value = 1;
-            addQuantityInput.Left = 330;
+            addQuantityInput.Left = 290;
             addQuantityInput.Top = 84;
-            addQuantityInput.Width = 80;
-            addQuantityInput.Height = 42;
+            addQuantityInput.Width = 70;
+            addQuantityInput.Height = 56;
             addQuantityInput.Font = new Font("Segoe UI", 16, FontStyle.Bold);
             productCard.Controls.Add(addQuantityInput);
 
+            Button quantityDownButton = UiTheme.SecondaryButton("-");
+            quantityDownButton.Left = 370;
+            quantityDownButton.Top = 84;
+            quantityDownButton.Width = 52;
+            quantityDownButton.Height = 56;
+            quantityDownButton.Font = new Font("Segoe UI", 20, FontStyle.Bold);
+            quantityDownButton.Click += delegate { ChangeAddQuantity(-1); };
+            productCard.Controls.Add(quantityDownButton);
+
+            Button quantityUpButton = UiTheme.SecondaryButton("+");
+            quantityUpButton.Left = 430;
+            quantityUpButton.Top = 84;
+            quantityUpButton.Width = 52;
+            quantityUpButton.Height = 56;
+            quantityUpButton.Font = new Font("Segoe UI", 20, FontStyle.Bold);
+            quantityUpButton.Click += delegate { ChangeAddQuantity(1); };
+            productCard.Controls.Add(quantityUpButton);
+
             Button addButton = UiTheme.PrimaryButton(Localization.T("Add"));
             addButton.Name = "addButton";
-            addButton.Left = 430;
+            addButton.Left = 490;
             addButton.Top = 84;
-            addButton.Width = 175;
-            addButton.Height = 42;
+            addButton.Width = 130;
+            addButton.Height = 56;
             addButton.Click += delegate { AddProductToCart(searchTextBox.Text); };
             productCard.Controls.Add(addButton);
 
-            categoryFilterComboBox = new ComboBox();
-            categoryFilterComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            categoryFilterComboBox.Font = new Font("Segoe UI", 13, FontStyle.Bold);
-            categoryFilterComboBox.IntegralHeight = false;
-            categoryFilterComboBox.DropDownHeight = 260;
-            categoryFilterComboBox.ItemHeight = 24;
-            categoryFilterComboBox.Left = 18;
-            categoryFilterComboBox.Top = 144;
-            categoryFilterComboBox.Width = 300;
-            categoryFilterComboBox.SelectedIndexChanged += delegate
-            {
-                if (!refreshingCategories)
-                {
-                    RefreshProducts();
-                }
-            };
-            productCard.Controls.Add(categoryFilterComboBox);
+            categoryButtonsPanel = new FlowLayoutPanel();
+            categoryButtonsPanel.Left = 18;
+            categoryButtonsPanel.Top = 154;
+            categoryButtonsPanel.Width = 570;
+            categoryButtonsPanel.Height = 58;
+            categoryButtonsPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            categoryButtonsPanel.AutoScroll = true;
+            categoryButtonsPanel.WrapContents = false;
+            categoryButtonsPanel.BackColor = Color.White;
+            categoryButtonsPanel.Padding = new Padding(0);
+            productCard.Controls.Add(categoryButtonsPanel);
 
             productButtonsPanel = new FlowLayoutPanel();
             productButtonsPanel.Left = 18;
-            productButtonsPanel.Top = 194;
+            productButtonsPanel.Top = 226;
             productButtonsPanel.Width = 570;
-            productButtonsPanel.Height = 310;
+            productButtonsPanel.Height = 278;
             productButtonsPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
             productButtonsPanel.AutoScroll = true;
             productButtonsPanel.BackColor = Color.White;
@@ -321,7 +334,8 @@ namespace OlyDrugstorePOS
             employeeDiscountCheckBox.Left = 18;
             employeeDiscountCheckBox.Top = 284;
             employeeDiscountCheckBox.Width = 230;
-            employeeDiscountCheckBox.Font = UiTheme.FontBold;
+            employeeDiscountCheckBox.Height = 34;
+            employeeDiscountCheckBox.Font = new Font("Segoe UI", 11, FontStyle.Bold);
             employeeDiscountCheckBox.CheckedChanged += delegate { ApplyEmployeeDiscount(); };
             checkoutCard.Controls.Add(employeeDiscountCheckBox);
 
@@ -341,6 +355,7 @@ namespace OlyDrugstorePOS
             paymentComboBox.Left = 150;
             paymentComboBox.Top = 342;
             paymentComboBox.Width = 130;
+            paymentComboBox.Font = new Font("Segoe UI", 12, FontStyle.Bold);
             checkoutCard.Controls.Add(paymentComboBox);
 
             returnCheckBox = Check(Localization.T("Return"), "returnCheckBox", 250, 284);
@@ -698,8 +713,8 @@ namespace OlyDrugstorePOS
             check.Left = left;
             check.Top = top;
             check.Width = 160;
-            check.Height = 28;
-            check.Font = UiTheme.FontBold;
+            check.Height = 34;
+            check.Font = new Font("Segoe UI", 11, FontStyle.Bold);
             check.ForeColor = UiTheme.Text;
             return check;
         }
@@ -765,10 +780,7 @@ namespace OlyDrugstorePOS
 
             List<Product> products = store.Database.Products
                 .Where(p => p.StoreId == activeStoreId)
-                .Where(p => categoryFilterComboBox == null ||
-                            categoryFilterComboBox.SelectedItem == null ||
-                            categoryFilterComboBox.SelectedItem.ToString() == "All" ||
-                            p.Category == categoryFilterComboBox.SelectedItem.ToString())
+                .Where(p => activeCategory == "All" || p.Category == activeCategory)
                 .Where(p => searchTextBox == null ||
                             string.IsNullOrEmpty(searchTextBox.Text) ||
                             p.Name.ToLowerInvariant().Contains(searchTextBox.Text.ToLowerInvariant()) ||
@@ -792,12 +804,11 @@ namespace OlyDrugstorePOS
 
         private void RefreshCategories()
         {
-            if (categoryFilterComboBox == null)
+            if (categoryButtonsPanel == null)
             {
                 return;
             }
 
-            string current = categoryFilterComboBox.SelectedItem == null ? "All" : categoryFilterComboBox.SelectedItem.ToString();
             List<string> categories = store.Database.Products
                 .Where(p => p.StoreId == activeStoreId)
                 .Select(p => p.Category)
@@ -805,29 +816,52 @@ namespace OlyDrugstorePOS
                 .OrderBy(c => c)
                 .ToList();
 
+            if (activeCategory != "All" && !categories.Contains(activeCategory))
+            {
+                activeCategory = "All";
+            }
+
             refreshingCategories = true;
             try
             {
-                categoryFilterComboBox.Items.Clear();
-                categoryFilterComboBox.Items.Add("All");
+                categoryButtonsPanel.SuspendLayout();
+                categoryButtonsPanel.Controls.Clear();
+                RenderCategoryButton("All");
                 foreach (string category in categories)
                 {
-                    categoryFilterComboBox.Items.Add(category);
+                    RenderCategoryButton(category);
                 }
-
-                if (categoryFilterComboBox.Items.Contains(current))
-                {
-                    categoryFilterComboBox.SelectedItem = current;
-                }
-                else
-                {
-                    categoryFilterComboBox.SelectedIndex = 0;
-                }
+                categoryButtonsPanel.ResumeLayout();
             }
             finally
             {
                 refreshingCategories = false;
             }
+        }
+
+        private void RenderCategoryButton(string category)
+        {
+            Button button = category == activeCategory
+                ? UiTheme.PrimaryButton(category)
+                : UiTheme.SecondaryButton(category);
+            button.Width = category == "All" ? 86 : 132;
+            button.Height = 46;
+            button.Margin = new Padding(0, 0, 10, 8);
+            button.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+            button.Tag = category;
+            button.Click += delegate(object sender, EventArgs e)
+            {
+                Button source = sender as Button;
+                string selectedCategory = source == null ? "All" : source.Tag.ToString();
+                if (refreshingCategories || activeCategory == selectedCategory)
+                {
+                    return;
+                }
+
+                activeCategory = selectedCategory;
+                RefreshProducts();
+            };
+            categoryButtonsPanel.Controls.Add(button);
         }
 
         private void RenderProductButtons(List<Product> products)
@@ -926,6 +960,19 @@ namespace OlyDrugstorePOS
             if (addQuantityInput != null) addQuantityInput.Value = 1;
             RefreshProducts();
             RefreshCart();
+        }
+
+        private void ChangeAddQuantity(int change)
+        {
+            if (addQuantityInput == null)
+            {
+                return;
+            }
+
+            decimal next = addQuantityInput.Value + change;
+            if (next < addQuantityInput.Minimum) next = addQuantityInput.Minimum;
+            if (next > addQuantityInput.Maximum) next = addQuantityInput.Maximum;
+            addQuantityInput.Value = next;
         }
 
         private void RemoveSelectedCartItem()

@@ -47,7 +47,8 @@ namespace OlyDrugstorePOS
             input.Left = left;
             input.Top = top;
             input.Width = width;
-            input.Height = 34;
+            input.Height = 42;
+            input.AutoSize = false;
             input.Font = new Font("Segoe UI", 12);
             ApplyInputStyle(input);
             return input;
@@ -99,13 +100,13 @@ namespace OlyDrugstorePOS
             grid.ColumnHeadersDefaultCellStyle.ForeColor = Text;
             grid.ColumnHeadersDefaultCellStyle.Font = FontBold;
             grid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            grid.ColumnHeadersHeight = 36;
-            grid.DefaultCellStyle.Font = FontNormal;
+            grid.ColumnHeadersHeight = 44;
+            grid.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
             grid.DefaultCellStyle.Padding = new Padding(8, 0, 8, 0);
             grid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
             grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(220, 252, 231);
             grid.DefaultCellStyle.SelectionForeColor = Text;
-            grid.RowTemplate.Height = 34;
+            grid.RowTemplate.Height = 42;
             return grid;
         }
 
