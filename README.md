@@ -77,6 +77,12 @@ Backups are saved to:
 backups\
 ```
 
+Shift closing reports are printed and saved to:
+
+```text
+shift-reports\
+```
+
 ## Future Production Steps
 
 - Replace XML storage with SQLite after confirming target computer support

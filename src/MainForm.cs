@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -1810,7 +1811,10 @@ namespace OlyDrugstorePOS
             }
 
             store.CloseSession(session, countedCashInput.Value);
-            MessageBox.Show(Localization.T("BackupDone"));
+            string report = BuildShiftClosingReport(session);
+            string reportPath = SaveShiftClosingReport(session, report);
+            PrintShiftClosingReport(report);
+            MessageBox.Show(Localization.T("BackupDone") + "\nClosing report saved:\n" + reportPath);
             RefreshAll();
         }
 
@@ -2017,6 +2021,138 @@ namespace OlyDrugstorePOS
             {
                 MessageBox.Show(receipt, Localization.T("PrintTicket"));
             }
+        }
+
+        private string BuildShiftClosingReport(CashSession session)
+        {
+            List<Sale> sales = store.Database.Sales
+                .Where(s => s.CashierUsername == session.CashierUsername &&
+                            s.StoreId == session.StoreId &&
+                            s.CreatedAt >= session.OpenedAt &&
+                            s.CreatedAt <= session.ClosedAt)
+                .OrderBy(s => s.CreatedAt)
+                .ToList();
+
+            decimal cashSales = sales
+                .Where(s => s.PaymentMethod == "Cash" && !s.IsDebt)
+                .Sum(s => s.IsReturn ? -s.Total : s.Total);
+            decimal cardAndOtherSales = sales
+                .Where(s => s.PaymentMethod != "Cash" && !s.IsDebt)
+                .Sum(s => s.IsReturn ? -s.Total : s.Total);
+            decimal debtSales = sales
+                .Where(s => s.IsDebt)
+                .Sum(s => s.IsReturn ? -s.Total : s.Total);
+            decimal returns = sales
+                .Where(s => s.IsReturn)
+                .Sum(s => s.Total);
+            decimal deposits = session.Movements.Where(m => m.Type == "Deposit").Sum(m => m.Amount);
+            decimal withdrawals = session.Movements.Where(m => m.Type == "Withdrawal").Sum(m => m.Amount);
+
+            Store activeStore = store.Database.Stores.FirstOrDefault(s => s.Id == session.StoreId);
+            string storeName = activeStore == null ? session.StoreId : activeStore.Name;
+
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("OLY DRUGSTORE POS");
+            builder.AppendLine("SHIFT CLOSING REPORT");
+            builder.AppendLine("----------------------------------------");
+            builder.AppendLine("Report date: " + DateTime.Now.ToString("g"));
+            builder.AppendLine("Store: " + storeName + " (" + session.StoreId + ")");
+            builder.AppendLine("Cashier: " + session.CashierUsername);
+            builder.AppendLine("Session: #" + session.Id);
+            builder.AppendLine("Opened: " + session.OpenedAt.ToString("g"));
+            builder.AppendLine("Closed: " + session.ClosedAt.ToString("g"));
+            builder.AppendLine("----------------------------------------");
+            builder.AppendLine("Opening fund: " + Money(session.OpeningFund));
+            builder.AppendLine("Cash sales: " + Money(cashSales));
+            builder.AppendLine("Card/other sales: " + Money(cardAndOtherSales));
+            builder.AppendLine("Debt sales: " + Money(debtSales));
+            builder.AppendLine("Returns: " + Money(returns));
+            builder.AppendLine("Deposits: " + Money(deposits));
+            builder.AppendLine("Withdrawals: " + Money(withdrawals));
+            builder.AppendLine("----------------------------------------");
+            builder.AppendLine("Expected cash: " + Money(session.ExpectedCash));
+            builder.AppendLine("Counted cash: " + Money(session.CountedCash));
+            builder.AppendLine("Difference: " + Money(session.Difference));
+            builder.AppendLine("Leave in register: " + Money(200m));
+            builder.AppendLine("Bank deposit: " + Money(session.BankDeposit));
+            builder.AppendLine("----------------------------------------");
+            builder.AppendLine("Tickets: " + sales.Count);
+            foreach (Sale sale in sales)
+            {
+                builder.AppendLine(
+                    sale.TicketNumber + " | " +
+                    sale.CreatedAt.ToString("HH:mm") + " | " +
+                    sale.PaymentMethod + " | " +
+                    (sale.IsDebt ? "DEBT | " : "") +
+                    (sale.IsReturn ? "RETURN | " : "") +
+                    Money(sale.Total));
+            }
+
+            if (session.Movements.Count > 0)
+            {
+                builder.AppendLine("----------------------------------------");
+                builder.AppendLine("Cash movements");
+                foreach (CashMovement movement in session.Movements.OrderBy(m => m.CreatedAt))
+                {
+                    builder.AppendLine(
+                        movement.CreatedAt.ToString("HH:mm") + " | " +
+                        movement.Type + " | " +
+                        Money(movement.Amount) + " | " +
+                        movement.Reason);
+                }
+            }
+
+            builder.AppendLine("----------------------------------------");
+            builder.AppendLine("Cashier signature:");
+            builder.AppendLine();
+            builder.AppendLine("Manager signature:");
+            return builder.ToString();
+        }
+
+        private string SaveShiftClosingReport(CashSession session, string report)
+        {
+            string reportsDirectory = Path.Combine(Application.StartupPath, "shift-reports");
+            Directory.CreateDirectory(reportsDirectory);
+            string fileName = "shift-" + session.Id.ToString("000000") + "-" + session.ClosedAt.ToString("yyyyMMdd-HHmmss") + ".txt";
+            string reportPath = Path.Combine(reportsDirectory, fileName);
+            File.WriteAllText(reportPath, report, Encoding.UTF8);
+            return reportPath;
+        }
+
+        private void PrintShiftClosingReport(string report)
+        {
+            try
+            {
+                string[] lines = report.Replace("\r\n", "\n").Split('\n');
+                int lineIndex = 0;
+                PrintDocument document = new PrintDocument();
+                document.DocumentName = "Oly shift closing report";
+                document.PrintPage += delegate(object sender, PrintPageEventArgs e)
+                {
+                    using (Font font = new Font("Consolas", 9))
+                    {
+                        float lineHeight = font.GetHeight(e.Graphics) + 2;
+                        float y = e.MarginBounds.Top;
+                        while (lineIndex < lines.Length && y + lineHeight < e.MarginBounds.Bottom)
+                        {
+                            e.Graphics.DrawString(lines[lineIndex], font, Brushes.Black, e.MarginBounds.Left, y);
+                            y += lineHeight;
+                            lineIndex++;
+                        }
+                        e.HasMorePages = lineIndex < lines.Length;
+                    }
+                };
+                document.Print();
+            }
+            catch
+            {
+                MessageBox.Show(report, "Shift closing report");
+            }
+        }
+
+        private string Money(decimal amount)
+        {
+            return amount.ToString("0.000") + " DT";
         }
 
         private string BuildReceipt(Sale sale)
