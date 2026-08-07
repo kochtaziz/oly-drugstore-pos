@@ -19,7 +19,9 @@ namespace OlyDrugstorePOS
         private ComboBox storeComboBox;
         private ComboBox languageComboBox;
         private TextBox searchTextBox;
+        private Panel productViewportPanel;
         private FlowLayoutPanel productButtonsPanel;
+        private VScrollBar productScrollBar;
         private FlowLayoutPanel categoryButtonsPanel;
         private DataGridView cartGrid;
         private Label totalLabel;
@@ -268,16 +270,40 @@ namespace OlyDrugstorePOS
             categoryButtonsPanel.Padding = new Padding(0);
             productCard.Controls.Add(categoryButtonsPanel);
 
+            productViewportPanel = new Panel();
+            productViewportPanel.Left = 172;
+            productViewportPanel.Top = 158;
+            productViewportPanel.Width = 390;
+            productViewportPanel.Height = 345;
+            productViewportPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
+            productViewportPanel.BackColor = Color.White;
+            productViewportPanel.BorderStyle = BorderStyle.None;
+            productCard.Controls.Add(productViewportPanel);
+
             productButtonsPanel = new FlowLayoutPanel();
-            productButtonsPanel.Left = 172;
-            productButtonsPanel.Top = 158;
-            productButtonsPanel.Width = 410;
+            productButtonsPanel.Left = 0;
+            productButtonsPanel.Top = 0;
+            productButtonsPanel.Width = 390;
             productButtonsPanel.Height = 345;
-            productButtonsPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
-            productButtonsPanel.AutoScroll = true;
+            productButtonsPanel.AutoScroll = false;
+            productButtonsPanel.WrapContents = true;
             productButtonsPanel.BackColor = Color.White;
             productButtonsPanel.Padding = new Padding(2);
-            productCard.Controls.Add(productButtonsPanel);
+            productViewportPanel.Controls.Add(productButtonsPanel);
+
+            productScrollBar = new VScrollBar();
+            productScrollBar.Left = 570;
+            productScrollBar.Top = 158;
+            productScrollBar.Width = 44;
+            productScrollBar.Height = 345;
+            productScrollBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
+            productScrollBar.SmallChange = 48;
+            productScrollBar.LargeChange = 144;
+            productScrollBar.Scroll += delegate(object sender, ScrollEventArgs e)
+            {
+                ScrollProductsTo(e.NewValue);
+            };
+            productCard.Controls.Add(productScrollBar);
 
             Panel checkoutCard = UiTheme.CardPanel();
             checkoutCard.Dock = DockStyle.Fill;
@@ -874,9 +900,9 @@ namespace OlyDrugstorePOS
             foreach (Product product in products)
             {
                 Button button = new Button();
-                button.Width = 178;
+                button.Width = 160;
                 button.Height = 128;
-                button.Margin = new Padding(8);
+                button.Margin = new Padding(7);
                 button.FlatStyle = FlatStyle.Flat;
                 button.FlatAppearance.BorderColor = UiTheme.Border;
                 button.BackColor = product.Quantity <= product.MinimumQuantity
@@ -904,6 +930,51 @@ namespace OlyDrugstorePOS
             }
 
             productButtonsPanel.ResumeLayout();
+            productButtonsPanel.Height = Math.Max(productViewportPanel.Height, productButtonsPanel.PreferredSize.Height + 12);
+            productButtonsPanel.Top = 0;
+            UpdateProductScrollBar();
+        }
+
+        private void UpdateProductScrollBar()
+        {
+            if (productButtonsPanel == null || productViewportPanel == null || productScrollBar == null)
+            {
+                return;
+            }
+
+            int scrollableHeight = Math.Max(0, productButtonsPanel.Height - productViewportPanel.Height);
+            productScrollBar.Enabled = scrollableHeight > 0;
+            productScrollBar.Minimum = 0;
+            productScrollBar.LargeChange = 144;
+            productScrollBar.SmallChange = 48;
+            productScrollBar.Maximum = scrollableHeight + productScrollBar.LargeChange - 1;
+            int current = Math.Min(scrollableHeight, Math.Max(0, -productButtonsPanel.Top));
+            productScrollBar.Value = Math.Min(productScrollBar.Maximum - productScrollBar.LargeChange + 1, current);
+        }
+
+        private void ScrollProductsTo(int value)
+        {
+            if (productButtonsPanel == null || productViewportPanel == null || productScrollBar == null)
+            {
+                return;
+            }
+
+            int scrollableHeight = Math.Max(0, productButtonsPanel.Height - productViewportPanel.Height);
+            int target = Math.Min(scrollableHeight, Math.Max(0, value));
+            productButtonsPanel.Top = -target;
+        }
+
+        private void SyncProductScrollBarFromPanel()
+        {
+            if (productButtonsPanel == null || productScrollBar == null || !productScrollBar.Enabled)
+            {
+                return;
+            }
+
+            int scrollableHeight = Math.Max(0, productButtonsPanel.Height - productViewportPanel.Height);
+            int current = Math.Min(scrollableHeight, Math.Max(0, -productButtonsPanel.Top));
+            int maxValue = Math.Max(productScrollBar.Minimum, productScrollBar.Maximum - productScrollBar.LargeChange + 1);
+            productScrollBar.Value = Math.Min(maxValue, current);
         }
 
         private void HandleSearchChanged()
