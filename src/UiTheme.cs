@@ -5,10 +5,26 @@ namespace OlyDrugstorePOS
 {
     public class SmoothPanel : Panel
     {
+        public Color BorderColor { get; set; }
+
         public SmoothPanel()
         {
             DoubleBuffered = true;
             ResizeRedraw = true;
+            BorderColor = UiTheme.Border;
+            BorderStyle = BorderStyle.None;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            using (Pen pen = new Pen(BorderColor))
+            {
+                Rectangle border = ClientRectangle;
+                border.Width -= 1;
+                border.Height -= 1;
+                e.Graphics.DrawRectangle(pen, border);
+            }
         }
     }
 
@@ -29,19 +45,78 @@ namespace OlyDrugstorePOS
         }
     }
 
+    public class ThemedButton : Button
+    {
+        private Color normalBackColor;
+        private Color hoverBackColor;
+        private Color pressedBackColor;
+
+        public Color NormalBackColor
+        {
+            get { return normalBackColor; }
+            set
+            {
+                normalBackColor = value;
+                BackColor = value;
+            }
+        }
+
+        public Color HoverBackColor
+        {
+            get { return hoverBackColor; }
+            set { hoverBackColor = value; }
+        }
+
+        public Color PressedBackColor
+        {
+            get { return pressedBackColor; }
+            set { pressedBackColor = value; }
+        }
+
+        protected override void OnMouseEnter(System.EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            BackColor = hoverBackColor;
+        }
+
+        protected override void OnMouseLeave(System.EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            BackColor = normalBackColor;
+        }
+
+        protected override void OnMouseDown(MouseEventArgs mevent)
+        {
+            base.OnMouseDown(mevent);
+            BackColor = pressedBackColor;
+        }
+
+        protected override void OnMouseUp(MouseEventArgs mevent)
+        {
+            base.OnMouseUp(mevent);
+            BackColor = ClientRectangle.Contains(PointToClient(Cursor.Position)) ? hoverBackColor : normalBackColor;
+        }
+    }
+
     public static class UiTheme
     {
-        public static readonly Color Background = Color.FromArgb(241, 245, 249);
+        public static readonly Color Background = Color.FromArgb(245, 247, 251);
         public static readonly Color Card = Color.White;
-        public static readonly Color Primary = Color.FromArgb(15, 23, 42);
-        public static readonly Color Accent = Color.FromArgb(22, 101, 52);
+        public static readonly Color CardAlt = Color.FromArgb(248, 250, 252);
+        public static readonly Color Primary = Color.FromArgb(12, 18, 32);
+        public static readonly Color PrimarySoft = Color.FromArgb(30, 41, 59);
+        public static readonly Color Accent = Color.FromArgb(22, 121, 70);
+        public static readonly Color AccentHover = Color.FromArgb(18, 101, 58);
+        public static readonly Color AccentSoft = Color.FromArgb(225, 249, 235);
         public static readonly Color Muted = Color.FromArgb(100, 116, 139);
-        public static readonly Color Border = Color.FromArgb(203, 213, 225);
-        public static readonly Color Text = Color.FromArgb(15, 23, 42);
+        public static readonly Color Border = Color.FromArgb(218, 226, 236);
+        public static readonly Color BorderStrong = Color.FromArgb(188, 199, 213);
+        public static readonly Color Text = Color.FromArgb(17, 24, 39);
+        public static readonly Color DangerSoft = Color.FromArgb(255, 247, 237);
 
         public static readonly Font FontSmall = new Font("Segoe UI", 9, FontStyle.Regular);
         public static readonly Font FontNormal = new Font("Segoe UI", 10, FontStyle.Regular);
-        public static readonly Font FontBold = new Font("Segoe UI", 10, FontStyle.Bold);
+        public static readonly Font FontBold = new Font("Segoe UI Semibold", 10, FontStyle.Bold);
         public static readonly Font FontLarge = new Font("Segoe UI", 14, FontStyle.Bold);
         public static readonly Font FontTitle = new Font("Segoe UI", 22, FontStyle.Bold);
 
@@ -49,7 +124,6 @@ namespace OlyDrugstorePOS
         {
             Panel panel = new SmoothPanel();
             panel.BackColor = Card;
-            panel.BorderStyle = BorderStyle.FixedSingle;
             return panel;
         }
 
@@ -76,36 +150,43 @@ namespace OlyDrugstorePOS
             input.Height = 42;
             input.AutoSize = false;
             input.Font = new Font("Segoe UI", 12);
+            input.BorderStyle = BorderStyle.FixedSingle;
             ApplyInputStyle(input);
             return input;
         }
 
         public static Button PrimaryButton(string text)
         {
-            Button button = new Button();
+            ThemedButton button = new ThemedButton();
             button.Text = text;
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderSize = 0;
-            button.BackColor = Accent;
+            button.NormalBackColor = Accent;
+            button.HoverBackColor = AccentHover;
+            button.PressedBackColor = Color.FromArgb(13, 84, 46);
             button.ForeColor = Color.White;
             button.Font = FontBold;
             button.Cursor = Cursors.Hand;
             button.TextAlign = ContentAlignment.MiddleCenter;
+            button.UseVisualStyleBackColor = false;
             return button;
         }
 
         public static Button SecondaryButton(string text)
         {
-            Button button = new Button();
+            ThemedButton button = new ThemedButton();
             button.Text = text;
             button.FlatStyle = FlatStyle.Flat;
-            button.FlatAppearance.BorderColor = Border;
+            button.FlatAppearance.BorderColor = BorderStrong;
             button.FlatAppearance.BorderSize = 1;
-            button.BackColor = Color.White;
+            button.NormalBackColor = Color.White;
+            button.HoverBackColor = CardAlt;
+            button.PressedBackColor = Color.FromArgb(232, 238, 247);
             button.ForeColor = Text;
             button.Font = FontBold;
             button.Cursor = Cursors.Hand;
             button.TextAlign = ContentAlignment.MiddleCenter;
+            button.UseVisualStyleBackColor = false;
             return button;
         }
 
@@ -114,6 +195,7 @@ namespace OlyDrugstorePOS
             DataGridView grid = new SmoothDataGridView();
             grid.BackgroundColor = Card;
             grid.BorderStyle = BorderStyle.None;
+            grid.GridColor = Border;
             grid.RowHeadersVisible = false;
             grid.AllowUserToAddRows = false;
             grid.AllowUserToDeleteRows = false;
@@ -122,7 +204,9 @@ namespace OlyDrugstorePOS
             grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
             grid.ScrollBars = ScrollBars.Both;
             grid.EnableHeadersVisualStyles = false;
-            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(226, 232, 240);
+            grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+            grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(236, 241, 247);
             grid.ColumnHeadersDefaultCellStyle.ForeColor = Text;
             grid.ColumnHeadersDefaultCellStyle.Font = FontBold;
             grid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
@@ -130,7 +214,10 @@ namespace OlyDrugstorePOS
             grid.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
             grid.DefaultCellStyle.Padding = new Padding(8, 0, 8, 0);
             grid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(220, 252, 231);
+            grid.DefaultCellStyle.BackColor = Card;
+            grid.DefaultCellStyle.ForeColor = Text;
+            grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(250, 252, 255);
+            grid.DefaultCellStyle.SelectionBackColor = AccentSoft;
             grid.DefaultCellStyle.SelectionForeColor = Text;
             grid.RowTemplate.Height = 42;
             return grid;

@@ -46,6 +46,15 @@ namespace OlyDrugstorePOS
             brandPanel.Dock = DockStyle.Fill;
             shell.Controls.Add(brandPanel, 0, 0);
 
+            Panel accentBar = new Panel();
+            accentBar.Left = 0;
+            accentBar.Top = 0;
+            accentBar.Width = 8;
+            accentBar.Height = 540;
+            accentBar.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            accentBar.BackColor = UiTheme.Accent;
+            brandPanel.Controls.Add(accentBar);
+
             Label logo = new Label();
             logo.Text = "OLY";
             logo.ForeColor = Color.White;
@@ -59,7 +68,7 @@ namespace OlyDrugstorePOS
 
             Label subtitle = new Label();
             subtitle.Text = "Drugstore POS\nStock, caisse et ventes";
-            subtitle.ForeColor = Color.FromArgb(210, 232, 255);
+            subtitle.ForeColor = Color.FromArgb(220, 238, 255);
             subtitle.Font = new Font("Segoe UI", 13, FontStyle.Bold);
             subtitle.Left = 40;
             subtitle.Top = 138;
@@ -69,7 +78,7 @@ namespace OlyDrugstorePOS
 
             Label note = new Label();
             note.Text = "Mode local hors ligne\nPret pour scanner et ticket";
-            note.ForeColor = Color.FromArgb(180, 205, 230);
+            note.ForeColor = Color.FromArgb(178, 194, 214);
             note.Font = UiTheme.FontSmall;
             note.Left = 40;
             note.Top = 330;
@@ -97,6 +106,9 @@ namespace OlyDrugstorePOS
             languageComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             languageComboBox.Items.AddRange(new object[] { "FR", "EN" });
             languageComboBox.SelectedItem = Localization.Language;
+            languageComboBox.Font = UiTheme.FontBold;
+            languageComboBox.BackColor = Color.White;
+            languageComboBox.ForeColor = UiTheme.Text;
             languageComboBox.Left = 340;
             languageComboBox.Top = 62;
             languageComboBox.Width = 80;

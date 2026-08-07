@@ -94,6 +94,10 @@ namespace OlyDrugstorePOS
             tabs.Dock = DockStyle.Fill;
             tabs.Font = UiTheme.FontBold;
             tabs.Padding = new Point(18, 8);
+            tabs.ItemSize = new Size(118, 34);
+            tabs.SizeMode = TabSizeMode.Fixed;
+            tabs.DrawMode = TabDrawMode.OwnerDrawFixed;
+            tabs.DrawItem += DrawMainTab;
             Controls.Add(tabs);
             Controls.Add(BuildTopBar());
 
@@ -152,7 +156,7 @@ namespace OlyDrugstorePOS
 
             Label userLabel = new Label();
             userLabel.Text = user.FullName + "  |  " + user.Role;
-            userLabel.ForeColor = Color.FromArgb(203, 213, 225);
+            userLabel.ForeColor = Color.FromArgb(196, 211, 229);
             userLabel.Font = UiTheme.FontSmall;
             userLabel.Left = 2;
             userLabel.Top = 46;
@@ -164,6 +168,8 @@ namespace OlyDrugstorePOS
             storeComboBox = new ComboBox();
             storeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             storeComboBox.Font = UiTheme.FontBold;
+            storeComboBox.BackColor = Color.White;
+            storeComboBox.ForeColor = UiTheme.Text;
             storeComboBox.Dock = DockStyle.Fill;
             storeComboBox.Margin = new Padding(10, 20, 10, 18);
             foreach (Store item in store.Database.Stores)
@@ -181,6 +187,8 @@ namespace OlyDrugstorePOS
             languageComboBox = new ComboBox();
             languageComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             languageComboBox.Font = UiTheme.FontBold;
+            languageComboBox.BackColor = Color.White;
+            languageComboBox.ForeColor = UiTheme.Text;
             languageComboBox.Items.AddRange(new object[] { "FR", "EN" });
             languageComboBox.SelectedItem = Localization.Language;
             languageComboBox.Dock = DockStyle.Fill;
@@ -193,7 +201,7 @@ namespace OlyDrugstorePOS
             top.Controls.Add(languageComboBox, 2, 0);
 
             sessionSummaryLabel = new Label();
-            sessionSummaryLabel.ForeColor = Color.White;
+            sessionSummaryLabel.ForeColor = Color.FromArgb(240, 253, 244);
             sessionSummaryLabel.Font = UiTheme.FontBold;
             sessionSummaryLabel.TextAlign = ContentAlignment.MiddleRight;
             sessionSummaryLabel.Dock = DockStyle.Fill;
@@ -201,6 +209,36 @@ namespace OlyDrugstorePOS
             top.Controls.Add(sessionSummaryLabel, 3, 0);
 
             return top;
+        }
+
+        private void DrawMainTab(object sender, DrawItemEventArgs e)
+        {
+            TabPage page = tabs.TabPages[e.Index];
+            bool selected = e.Index == tabs.SelectedIndex;
+            Rectangle tabBounds = e.Bounds;
+            Color backColor = selected ? Color.White : UiTheme.Background;
+            Color textColor = selected ? UiTheme.Accent : UiTheme.Text;
+
+            using (SolidBrush brush = new SolidBrush(backColor))
+            {
+                e.Graphics.FillRectangle(brush, tabBounds);
+            }
+
+            if (selected)
+            {
+                using (SolidBrush brush = new SolidBrush(UiTheme.Accent))
+                {
+                    e.Graphics.FillRectangle(brush, tabBounds.Left + 16, tabBounds.Bottom - 3, tabBounds.Width - 32, 3);
+                }
+            }
+
+            TextRenderer.DrawText(
+                e.Graphics,
+                page.Text,
+                UiTheme.FontBold,
+                tabBounds,
+                textColor,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
         }
 
         private void BuildSalesTab()
@@ -289,7 +327,7 @@ namespace OlyDrugstorePOS
             categoryButtonsPanel.AutoScroll = true;
             categoryButtonsPanel.WrapContents = true;
             categoryButtonsPanel.FlowDirection = FlowDirection.TopDown;
-            categoryButtonsPanel.BackColor = Color.White;
+            categoryButtonsPanel.BackColor = UiTheme.CardAlt;
             categoryButtonsPanel.Padding = new Padding(0);
             productCard.Controls.Add(categoryButtonsPanel);
 
@@ -299,7 +337,7 @@ namespace OlyDrugstorePOS
             productViewportPanel.Width = 390;
             productViewportPanel.Height = 345;
             productViewportPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
-            productViewportPanel.BackColor = Color.White;
+            productViewportPanel.BackColor = UiTheme.CardAlt;
             productViewportPanel.BorderStyle = BorderStyle.None;
             productCard.Controls.Add(productViewportPanel);
 
@@ -310,7 +348,7 @@ namespace OlyDrugstorePOS
             productButtonsPanel.Height = 345;
             productButtonsPanel.AutoScroll = false;
             productButtonsPanel.WrapContents = true;
-            productButtonsPanel.BackColor = Color.White;
+            productButtonsPanel.BackColor = UiTheme.CardAlt;
             productButtonsPanel.Padding = new Padding(2);
             productViewportPanel.Controls.Add(productButtonsPanel);
 
@@ -387,6 +425,7 @@ namespace OlyDrugstorePOS
             employeeDiscountCheckBox.Width = 230;
             employeeDiscountCheckBox.Height = 34;
             employeeDiscountCheckBox.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+            employeeDiscountCheckBox.ForeColor = UiTheme.Text;
             employeeDiscountCheckBox.CheckedChanged += delegate { ApplyEmployeeDiscount(); };
             checkoutCard.Controls.Add(employeeDiscountCheckBox);
 
@@ -407,6 +446,8 @@ namespace OlyDrugstorePOS
             paymentComboBox.Top = 342;
             paymentComboBox.Width = 130;
             paymentComboBox.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+            paymentComboBox.BackColor = Color.White;
+            paymentComboBox.ForeColor = UiTheme.Text;
             checkoutCard.Controls.Add(paymentComboBox);
 
             returnCheckBox = Check(Localization.T("Return"), "returnCheckBox", 250, 284);
@@ -689,13 +730,21 @@ namespace OlyDrugstorePOS
         private Label CardTitle(string text, int left, int top)
         {
             Label label = new Label();
-            label.Text = text;
+            label.Text = "  " + text;
             label.Left = left;
             label.Top = top;
             label.Width = 360;
             label.Height = 32;
             label.Font = UiTheme.FontLarge;
             label.ForeColor = UiTheme.Text;
+            label.BackColor = Color.Transparent;
+            label.Paint += delegate(object sender, PaintEventArgs e)
+            {
+                using (SolidBrush brush = new SolidBrush(UiTheme.Accent))
+                {
+                    e.Graphics.FillRectangle(brush, 0, 7, 4, 18);
+                }
+            };
             return label;
         }
 
@@ -922,6 +971,7 @@ namespace OlyDrugstorePOS
             button.Height = 56;
             button.Margin = new Padding(0, 0, 0, 10);
             button.Font = UiTheme.FontBold;
+            button.FlatAppearance.BorderSize = activeCategory == category ? 0 : 1;
             button.Tag = category;
             button.Click += delegate(object sender, EventArgs e)
             {
@@ -958,15 +1008,28 @@ namespace OlyDrugstorePOS
 
                 foreach (Product product in products)
                 {
-                    Button button = new Button();
+                    Button button = UiTheme.SecondaryButton("");
                     button.Width = 160;
                     button.Height = 128;
                     button.Margin = new Padding(7);
-                    button.FlatStyle = FlatStyle.Flat;
-                    button.FlatAppearance.BorderColor = UiTheme.Border;
-                    button.BackColor = product.Quantity <= product.MinimumQuantity
-                        ? Color.FromArgb(255, 247, 237)
-                        : Color.FromArgb(248, 250, 252);
+                    Color productBackColor = product.Quantity <= product.MinimumQuantity
+                        ? UiTheme.DangerSoft
+                        : Color.White;
+                    ThemedButton themedButton = button as ThemedButton;
+                    if (themedButton != null)
+                    {
+                        themedButton.NormalBackColor = productBackColor;
+                        themedButton.HoverBackColor = product.Quantity <= product.MinimumQuantity
+                            ? Color.FromArgb(255, 237, 213)
+                            : UiTheme.CardAlt;
+                    }
+                    else
+                    {
+                        button.BackColor = productBackColor;
+                    }
+                    button.FlatAppearance.BorderColor = product.Quantity <= product.MinimumQuantity
+                        ? Color.FromArgb(253, 186, 116)
+                        : UiTheme.Border;
                     button.ForeColor = UiTheme.Text;
                     button.Font = UiTheme.FontBold;
                     button.TextAlign = ContentAlignment.MiddleLeft;
