@@ -404,8 +404,8 @@ namespace OlyDrugstorePOS
         {
             TabPage tab = NewTab("productsTab");
             TableLayoutPanel shell = PageGrid(2, 1);
-            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 56));
-            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 52));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48));
             tab.Controls.Add(shell);
 
             Panel listCard = UiTheme.CardPanel();
@@ -417,7 +417,7 @@ namespace OlyDrugstorePOS
             stockGrid = UiTheme.Grid();
             stockGrid.Left = 18;
             stockGrid.Top = 58;
-            stockGrid.Width = 710;
+            stockGrid.Width = 650;
             stockGrid.Height = 450;
             stockGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             stockGrid.CellClick += delegate { LoadSelectedProduct(); };
@@ -429,14 +429,14 @@ namespace OlyDrugstorePOS
             shell.Controls.Add(form, 1, 0);
             form.Controls.Add(CardTitle("Fiche produit", 22, 18));
 
-            productNameInput = AddTextField(form, "productNameLabel", 22, 76, 360);
-            productCategoryInput = AddTextField(form, "productCategoryLabel", 22, 142, 360);
-            barcodeInput = AddTextField(form, "barcodeLabel", 22, 208, 360);
-            purchasePriceInput = AddMoneyField(form, "purchaseLabel", 22, 274, 175);
-            salePriceInput = AddMoneyField(form, "salePriceLabel", 245, 274, 175);
+            productNameInput = AddTextField(form, "productNameLabel", 22, 76, 410);
+            productCategoryInput = AddTextField(form, "productCategoryLabel", 22, 142, 410);
+            barcodeInput = AddTextField(form, "barcodeLabel", 22, 208, 410);
+            purchasePriceInput = AddMoneyField(form, "purchaseLabel", 22, 274, 185);
+            salePriceInput = AddMoneyField(form, "salePriceLabel", 245, 274, 185);
             taxInput = AddMoneyField(form, "taxLabel", 22, 340, 125);
-            quantityInput = AddNumberField(form, "quantityLabel", 165, 340, 125);
-            minimumInput = AddNumberField(form, "minimumLabel", 308, 340, 125);
+            quantityInput = AddNumberField(form, "quantityLabel", 170, 340, 125);
+            minimumInput = AddNumberField(form, "minimumLabel", 318, 340, 125);
 
             AddLabel(form, "expiryLabel", Localization.T("Expiry"), 22, 406);
             expiryInput = new DateTimePicker();
@@ -451,7 +451,7 @@ namespace OlyDrugstorePOS
             productStoreInput.DropDownStyle = ComboBoxStyle.DropDownList;
             productStoreInput.Left = 245;
             productStoreInput.Top = 432;
-            productStoreInput.Width = 180;
+            productStoreInput.Width = 198;
             foreach (Store item in store.Database.Stores) productStoreInput.Items.Add(item.Id);
             productStoreInput.SelectedIndex = 0;
             form.Controls.Add(productStoreInput);
@@ -467,7 +467,7 @@ namespace OlyDrugstorePOS
 
             Button delete = UiTheme.SecondaryButton(Localization.T("DeleteProduct"));
             delete.Name = "deleteProductButton";
-            delete.Left = 210;
+            delete.Left = 220;
             delete.Top = 486;
             delete.Width = 175;
             delete.Height = 46;
@@ -1219,6 +1219,12 @@ namespace OlyDrugstorePOS
         {
             HideColumn(grid, "Id");
             HideColumn(grid, "StoreId");
+            if (adminView)
+            {
+                HideColumn(grid, "Barcode");
+                HideColumn(grid, "TaxRate");
+                HideColumn(grid, "ExpiryDate");
+            }
             if (!adminView)
             {
                 HideColumn(grid, "PurchasePrice");
@@ -1233,8 +1239,8 @@ namespace OlyDrugstorePOS
             RenameColumn(grid, "PurchasePrice", adminView ? "Achat" : Localization.T("PurchasePrice"));
             RenameColumn(grid, "SalePrice", adminView ? "Vente" : Localization.T("SalePrice"));
             RenameColumn(grid, "TaxRate", Localization.T("Tax"));
-            RenameColumn(grid, "Quantity", Localization.T("Quantity"));
-            RenameColumn(grid, "MinimumQuantity", Localization.T("Minimum"));
+            RenameColumn(grid, "Quantity", adminView ? "Qty" : Localization.T("Quantity"));
+            RenameColumn(grid, "MinimumQuantity", adminView ? "Min" : Localization.T("Minimum"));
             RenameColumn(grid, "ExpiryDate", Localization.T("Expiry"));
 
             AlignColumn(grid, "PurchasePrice", DataGridViewContentAlignment.MiddleRight);
@@ -1244,13 +1250,13 @@ namespace OlyDrugstorePOS
             AlignColumn(grid, "MinimumQuantity", DataGridViewContentAlignment.MiddleCenter);
 
             SetColumnWidth(grid, "Name", 160);
-            SetColumnWidth(grid, "Category", 105);
-            SetColumnWidth(grid, "Barcode", 120);
-            SetColumnWidth(grid, "PurchasePrice", 105);
-            SetColumnWidth(grid, "SalePrice", 105);
+            SetColumnWidth(grid, "Category", 92);
+            SetColumnWidth(grid, "Barcode", 100);
+            SetColumnWidth(grid, "PurchasePrice", 84);
+            SetColumnWidth(grid, "SalePrice", 84);
             SetColumnWidth(grid, "TaxRate", 70);
-            SetColumnWidth(grid, "Quantity", 80);
-            SetColumnWidth(grid, "MinimumQuantity", 80);
+            SetColumnWidth(grid, "Quantity", 74);
+            SetColumnWidth(grid, "MinimumQuantity", 74);
             SetColumnWidth(grid, "ExpiryDate", 110);
         }
 
