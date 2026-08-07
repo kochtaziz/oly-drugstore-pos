@@ -25,8 +25,10 @@ namespace OlyDrugstorePOS
         private ComboBox storeComboBox;
         private ComboBox languageComboBox;
         private TextBox searchTextBox;
+        private Panel categoryViewportPanel;
         private Panel productViewportPanel;
         private FlowLayoutPanel productButtonsPanel;
+        private VScrollBar categoryScrollBar;
         private VScrollBar productScrollBar;
         private FlowLayoutPanel categoryButtonsPanel;
         private DataGridView cartGrid;
@@ -318,18 +320,41 @@ namespace OlyDrugstorePOS
             addButton.Click += delegate { AddProductToCart(searchTextBox.Text); };
             productCard.Controls.Add(addButton);
 
+            categoryViewportPanel = new SmoothPanel();
+            categoryViewportPanel.Left = 18;
+            categoryViewportPanel.Top = 158;
+            categoryViewportPanel.Width = 145;
+            categoryViewportPanel.Height = 345;
+            categoryViewportPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
+            categoryViewportPanel.BackColor = UiTheme.CardAlt;
+            categoryViewportPanel.BorderStyle = BorderStyle.None;
+            productCard.Controls.Add(categoryViewportPanel);
+
             categoryButtonsPanel = new SmoothFlowLayoutPanel();
-            categoryButtonsPanel.Left = 18;
-            categoryButtonsPanel.Top = 158;
+            categoryButtonsPanel.Left = 0;
+            categoryButtonsPanel.Top = 0;
             categoryButtonsPanel.Width = 145;
             categoryButtonsPanel.Height = 345;
-            categoryButtonsPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
-            categoryButtonsPanel.AutoScroll = true;
-            categoryButtonsPanel.WrapContents = true;
+            categoryButtonsPanel.AutoScroll = false;
+            categoryButtonsPanel.WrapContents = false;
             categoryButtonsPanel.FlowDirection = FlowDirection.TopDown;
             categoryButtonsPanel.BackColor = UiTheme.CardAlt;
             categoryButtonsPanel.Padding = new Padding(0);
-            productCard.Controls.Add(categoryButtonsPanel);
+            categoryViewportPanel.Controls.Add(categoryButtonsPanel);
+
+            categoryScrollBar = new VScrollBar();
+            categoryScrollBar.Left = 18;
+            categoryScrollBar.Top = 158;
+            categoryScrollBar.Width = 32;
+            categoryScrollBar.Height = 345;
+            categoryScrollBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
+            categoryScrollBar.SmallChange = 48;
+            categoryScrollBar.LargeChange = 144;
+            categoryScrollBar.Scroll += delegate(object sender, ScrollEventArgs e)
+            {
+                ScrollCategoriesTo(e.NewValue);
+            };
+            productCard.Controls.Add(categoryScrollBar);
 
             productViewportPanel = new SmoothPanel();
             productViewportPanel.Left = 172;
@@ -956,6 +981,7 @@ namespace OlyDrugstorePOS
             finally
             {
                 categoryButtonsPanel.ResumeLayout(true);
+                FitCategoryButtonsToViewport();
                 SetRedraw(categoryButtonsPanel, true);
                 refreshingCategories = false;
             }
@@ -966,8 +992,7 @@ namespace OlyDrugstorePOS
             Button button = category == activeCategory
                 ? UiTheme.PrimaryButton(category)
                 : UiTheme.SecondaryButton(category);
-            button.Width = category == "All" ? 86 : 132;
-            button.Width = 130;
+            button.Width = Math.Max(100, categoryButtonsPanel.Width - 4);
             button.Height = 56;
             button.Margin = new Padding(0, 0, 0, 10);
             button.Font = UiTheme.FontBold;
@@ -1078,6 +1103,35 @@ namespace OlyDrugstorePOS
             productScrollBar.Value = Math.Min(productScrollBar.Maximum - productScrollBar.LargeChange + 1, current);
         }
 
+        private void UpdateCategoryScrollBar()
+        {
+            if (categoryButtonsPanel == null || categoryViewportPanel == null || categoryScrollBar == null)
+            {
+                return;
+            }
+
+            int scrollableHeight = Math.Max(0, categoryButtonsPanel.Height - categoryViewportPanel.Height);
+            categoryScrollBar.Enabled = scrollableHeight > 0;
+            categoryScrollBar.Minimum = 0;
+            categoryScrollBar.LargeChange = 144;
+            categoryScrollBar.SmallChange = 48;
+            categoryScrollBar.Maximum = scrollableHeight + categoryScrollBar.LargeChange - 1;
+            int current = Math.Min(scrollableHeight, Math.Max(0, -categoryButtonsPanel.Top));
+            categoryScrollBar.Value = Math.Min(categoryScrollBar.Maximum - categoryScrollBar.LargeChange + 1, current);
+        }
+
+        private void ScrollCategoriesTo(int value)
+        {
+            if (categoryButtonsPanel == null || categoryViewportPanel == null || categoryScrollBar == null)
+            {
+                return;
+            }
+
+            int scrollableHeight = Math.Max(0, categoryButtonsPanel.Height - categoryViewportPanel.Height);
+            int target = Math.Min(scrollableHeight, Math.Max(0, value));
+            categoryButtonsPanel.Top = -target;
+        }
+
         private void ScrollProductsTo(int value)
         {
             if (productButtonsPanel == null || productViewportPanel == null || productScrollBar == null)
@@ -1138,7 +1192,7 @@ namespace OlyDrugstorePOS
 
         private void LayoutSalesScreen()
         {
-            if (productViewportPanel == null || productButtonsPanel == null || productScrollBar == null || cartGrid == null)
+            if (categoryViewportPanel == null || productViewportPanel == null || productButtonsPanel == null || productScrollBar == null || cartGrid == null)
             {
                 return;
             }
@@ -1190,18 +1244,29 @@ namespace OlyDrugstorePOS
 
             int mainTop = 158;
             int mainHeight = Math.Max(240, productHeight - mainTop - pad);
-            int categoryWidth = Math.Min(170, Math.Max(118, productWidth / 4));
-            categoryButtonsPanel.Left = pad;
-            categoryButtonsPanel.Top = mainTop;
-            categoryButtonsPanel.Width = categoryWidth;
-            categoryButtonsPanel.Height = mainHeight;
+            int railGap = 8;
+            int categoryScrollWidth = 32;
+            int productScrollWidth = 44;
+            int categoryAreaWidth = Math.Min(172, Math.Max(146, productWidth / 4));
+            int categoryViewportWidth = Math.Max(104, categoryAreaWidth - categoryScrollWidth - railGap);
+            categoryViewportPanel.Left = pad;
+            categoryViewportPanel.Top = mainTop;
+            categoryViewportPanel.Width = categoryViewportWidth;
+            categoryViewportPanel.Height = mainHeight;
+            categoryScrollBar.Width = categoryScrollWidth;
+            categoryScrollBar.Left = categoryViewportPanel.Right + railGap;
+            categoryScrollBar.Top = mainTop;
+            categoryScrollBar.Height = mainHeight;
+            categoryButtonsPanel.Left = 0;
+            categoryButtonsPanel.Width = categoryViewportPanel.Width;
+            FitCategoryButtonsToViewport();
 
-            productScrollBar.Width = 44;
-            productScrollBar.Left = Math.Max(categoryButtonsPanel.Right + 130, productWidth - pad - productScrollBar.Width);
+            productScrollBar.Width = productScrollWidth;
+            productScrollBar.Left = Math.Max(categoryScrollBar.Right + 140, productWidth - pad - productScrollBar.Width);
             productScrollBar.Top = mainTop;
             productScrollBar.Height = mainHeight;
 
-            productViewportPanel.Left = categoryButtonsPanel.Right + 10;
+            productViewportPanel.Left = categoryScrollBar.Right + 12;
             productViewportPanel.Top = mainTop;
             productViewportPanel.Width = Math.Max(150, productScrollBar.Left - productViewportPanel.Left - 10);
             productViewportPanel.Height = mainHeight;
@@ -1350,6 +1415,23 @@ namespace OlyDrugstorePOS
 
             productButtonsPanel.Height = Math.Max(productViewportPanel.Height, productButtonsPanel.PreferredSize.Height + 12);
             UpdateProductScrollBar();
+        }
+
+        private void FitCategoryButtonsToViewport()
+        {
+            if (categoryButtonsPanel == null || categoryViewportPanel == null)
+            {
+                return;
+            }
+
+            categoryButtonsPanel.Width = categoryViewportPanel.Width;
+            foreach (Control control in categoryButtonsPanel.Controls)
+            {
+                control.Width = Math.Max(96, categoryViewportPanel.Width - 4);
+            }
+
+            categoryButtonsPanel.Height = Math.Max(categoryViewportPanel.Height, categoryButtonsPanel.PreferredSize.Height + 12);
+            UpdateCategoryScrollBar();
         }
 
         private void LayoutProductsScreen()
