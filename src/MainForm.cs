@@ -257,21 +257,22 @@ namespace OlyDrugstorePOS
 
             categoryButtonsPanel = new FlowLayoutPanel();
             categoryButtonsPanel.Left = 18;
-            categoryButtonsPanel.Top = 154;
-            categoryButtonsPanel.Width = 570;
-            categoryButtonsPanel.Height = 58;
-            categoryButtonsPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            categoryButtonsPanel.Top = 158;
+            categoryButtonsPanel.Width = 145;
+            categoryButtonsPanel.Height = 345;
+            categoryButtonsPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
             categoryButtonsPanel.AutoScroll = true;
-            categoryButtonsPanel.WrapContents = false;
+            categoryButtonsPanel.WrapContents = true;
+            categoryButtonsPanel.FlowDirection = FlowDirection.TopDown;
             categoryButtonsPanel.BackColor = Color.White;
             categoryButtonsPanel.Padding = new Padding(0);
             productCard.Controls.Add(categoryButtonsPanel);
 
             productButtonsPanel = new FlowLayoutPanel();
-            productButtonsPanel.Left = 18;
-            productButtonsPanel.Top = 226;
-            productButtonsPanel.Width = 570;
-            productButtonsPanel.Height = 278;
+            productButtonsPanel.Left = 172;
+            productButtonsPanel.Top = 158;
+            productButtonsPanel.Width = 410;
+            productButtonsPanel.Height = 345;
             productButtonsPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
             productButtonsPanel.AutoScroll = true;
             productButtonsPanel.BackColor = Color.White;
@@ -845,9 +846,10 @@ namespace OlyDrugstorePOS
                 ? UiTheme.PrimaryButton(category)
                 : UiTheme.SecondaryButton(category);
             button.Width = category == "All" ? 86 : 132;
-            button.Height = 46;
-            button.Margin = new Padding(0, 0, 10, 8);
-            button.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+            button.Width = 130;
+            button.Height = 56;
+            button.Margin = new Padding(0, 0, 0, 10);
+            button.Font = new Font("Segoe UI", 11, FontStyle.Bold);
             button.Tag = category;
             button.Click += delegate(object sender, EventArgs e)
             {
@@ -872,9 +874,9 @@ namespace OlyDrugstorePOS
             foreach (Product product in products)
             {
                 Button button = new Button();
-                button.Width = 245;
+                button.Width = 178;
                 button.Height = 128;
-                button.Margin = new Padding(10);
+                button.Margin = new Padding(8);
                 button.FlatStyle = FlatStyle.Flat;
                 button.FlatAppearance.BorderColor = UiTheme.Border;
                 button.BackColor = product.Quantity <= product.MinimumQuantity
