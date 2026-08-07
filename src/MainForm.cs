@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
@@ -10,6 +11,11 @@ namespace OlyDrugstorePOS
 {
     public class MainForm : Form
     {
+        private const int WM_SETREDRAW = 0x000B;
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
         private readonly DataStore store;
         private readonly User user;
         private readonly List<SaleItem> cart = new List<SaleItem>();
@@ -41,6 +47,9 @@ namespace OlyDrugstorePOS
         private string activeCategory = "All";
         private bool suppressSearchAutoAdd;
         private bool refreshingCategories;
+        private string lastCategoryRenderKey = "";
+        private string lastProductRenderKey = "";
+        private Timer responsiveLayoutTimer;
 
         private DataGridView stockGrid;
         private TextBox productNameInput;
@@ -73,6 +82,8 @@ namespace OlyDrugstorePOS
 
         private void BuildUi()
         {
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.ResizeRedraw, true);
+            UpdateStyles();
             Text = "Oly Drugstore POS - " + user.FullName;
             WindowState = FormWindowState.Maximized;
             MinimumSize = new Size(980, 640);
@@ -98,8 +109,15 @@ namespace OlyDrugstorePOS
             }
             BuildSettingsTab();
             RefreshText();
+            responsiveLayoutTimer = new Timer();
+            responsiveLayoutTimer.Interval = 33;
+            responsiveLayoutTimer.Tick += delegate
+            {
+                responsiveLayoutTimer.Stop();
+                ApplyResponsiveLayout();
+            };
             Shown += delegate { ApplyResponsiveLayout(); };
-            Resize += delegate { ApplyResponsiveLayout(); };
+            Resize += delegate { ScheduleResponsiveLayout(); };
         }
 
         private Control BuildTopBar()
@@ -262,7 +280,7 @@ namespace OlyDrugstorePOS
             addButton.Click += delegate { AddProductToCart(searchTextBox.Text); };
             productCard.Controls.Add(addButton);
 
-            categoryButtonsPanel = new FlowLayoutPanel();
+            categoryButtonsPanel = new SmoothFlowLayoutPanel();
             categoryButtonsPanel.Left = 18;
             categoryButtonsPanel.Top = 158;
             categoryButtonsPanel.Width = 145;
@@ -275,7 +293,7 @@ namespace OlyDrugstorePOS
             categoryButtonsPanel.Padding = new Padding(0);
             productCard.Controls.Add(categoryButtonsPanel);
 
-            productViewportPanel = new Panel();
+            productViewportPanel = new SmoothPanel();
             productViewportPanel.Left = 172;
             productViewportPanel.Top = 158;
             productViewportPanel.Width = 390;
@@ -285,7 +303,7 @@ namespace OlyDrugstorePOS
             productViewportPanel.BorderStyle = BorderStyle.None;
             productCard.Controls.Add(productViewportPanel);
 
-            productButtonsPanel = new FlowLayoutPanel();
+            productButtonsPanel = new SmoothFlowLayoutPanel();
             productButtonsPanel.Left = 0;
             productButtonsPanel.Top = 0;
             productButtonsPanel.Width = 390;
@@ -814,14 +832,16 @@ namespace OlyDrugstorePOS
         {
             RefreshCategories();
 
+            string query = searchTextBox == null ? "" : searchTextBox.Text.Trim();
+            string normalizedQuery = query.ToLowerInvariant();
             List<Product> products = store.Database.Products
                 .Where(p => p.StoreId == activeStoreId)
                 .Where(p => activeCategory == "All" || p.Category == activeCategory)
                 .Where(p => searchTextBox == null ||
-                            string.IsNullOrEmpty(searchTextBox.Text) ||
-                            p.Name.ToLowerInvariant().Contains(searchTextBox.Text.ToLowerInvariant()) ||
-                            p.Category.ToLowerInvariant().Contains(searchTextBox.Text.ToLowerInvariant()) ||
-                            (!string.IsNullOrEmpty(p.Barcode) && p.Barcode.Contains(searchTextBox.Text)))
+                            string.IsNullOrEmpty(normalizedQuery) ||
+                            p.Name.ToLowerInvariant().Contains(normalizedQuery) ||
+                            p.Category.ToLowerInvariant().Contains(normalizedQuery) ||
+                            (!string.IsNullOrEmpty(p.Barcode) && p.Barcode.Contains(query)))
                 .OrderBy(p => p.Name)
                 .ToList();
 
@@ -832,9 +852,17 @@ namespace OlyDrugstorePOS
 
             if (stockGrid != null)
             {
-                stockGrid.DataSource = null;
-                stockGrid.DataSource = products.ToList();
-                FormatProductsGrid(stockGrid, true);
+                SetRedraw(stockGrid, false);
+                try
+                {
+                    stockGrid.DataSource = null;
+                    stockGrid.DataSource = products.ToList();
+                    FormatProductsGrid(stockGrid, true);
+                }
+                finally
+                {
+                    SetRedraw(stockGrid, true);
+                }
             }
         }
 
@@ -857,9 +885,17 @@ namespace OlyDrugstorePOS
                 activeCategory = "All";
             }
 
+            string renderKey = activeStoreId + "|" + activeCategory + "|" + string.Join(";", categories.ToArray());
+            if (renderKey == lastCategoryRenderKey)
+            {
+                return;
+            }
+            lastCategoryRenderKey = renderKey;
+
             refreshingCategories = true;
             try
             {
+                SetRedraw(categoryButtonsPanel, false);
                 categoryButtonsPanel.SuspendLayout();
                 categoryButtonsPanel.Controls.Clear();
                 RenderCategoryButton("All");
@@ -867,10 +903,11 @@ namespace OlyDrugstorePOS
                 {
                     RenderCategoryButton(category);
                 }
-                categoryButtonsPanel.ResumeLayout();
             }
             finally
             {
+                categoryButtonsPanel.ResumeLayout(true);
+                SetRedraw(categoryButtonsPanel, true);
                 refreshingCategories = false;
             }
         }
@@ -884,7 +921,7 @@ namespace OlyDrugstorePOS
             button.Width = 130;
             button.Height = 56;
             button.Margin = new Padding(0, 0, 0, 10);
-            button.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+            button.Font = UiTheme.FontBold;
             button.Tag = category;
             button.Click += delegate(object sender, EventArgs e)
             {
@@ -903,44 +940,62 @@ namespace OlyDrugstorePOS
 
         private void RenderProductButtons(List<Product> products)
         {
-            productButtonsPanel.SuspendLayout();
-            productButtonsPanel.Controls.Clear();
-
-            foreach (Product product in products)
+            string renderKey = activeStoreId + "|" + activeCategory + "|" +
+                (searchTextBox == null ? "" : searchTextBox.Text.Trim()) + "|" +
+                string.Join(";", products.Select(p => p.Id + ":" + p.Quantity + ":" + p.MinimumQuantity).ToArray());
+            if (renderKey == lastProductRenderKey)
             {
-                Button button = new Button();
-                button.Width = 160;
-                button.Height = 128;
-                button.Margin = new Padding(7);
-                button.FlatStyle = FlatStyle.Flat;
-                button.FlatAppearance.BorderColor = UiTheme.Border;
-                button.BackColor = product.Quantity <= product.MinimumQuantity
-                    ? Color.FromArgb(255, 247, 237)
-                    : Color.FromArgb(248, 250, 252);
-                button.ForeColor = UiTheme.Text;
-                button.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-                button.TextAlign = ContentAlignment.MiddleLeft;
-                button.Text =
-                    product.Category.ToUpperInvariant() + "\n\n" +
-                    product.Name + "\n" +
-                    product.SalePrice.ToString("0.000") + " DT\n" +
-                    "Stock: " + product.Quantity;
-                button.Tag = product;
-                button.Click += delegate(object sender, EventArgs e)
-                {
-                    Button source = sender as Button;
-                    Product selected = source == null ? null : source.Tag as Product;
-                    if (selected != null)
-                    {
-                        AddProductToCart(!string.IsNullOrEmpty(selected.Barcode) ? selected.Barcode : selected.Name);
-                    }
-                };
-                productButtonsPanel.Controls.Add(button);
+                FitProductButtonsToViewport();
+                return;
             }
+            lastProductRenderKey = renderKey;
 
-            productButtonsPanel.ResumeLayout();
-            productButtonsPanel.Top = 0;
-            FitProductButtonsToViewport();
+            SetRedraw(productButtonsPanel, false);
+            productButtonsPanel.SuspendLayout();
+            try
+            {
+                productButtonsPanel.Controls.Clear();
+
+                foreach (Product product in products)
+                {
+                    Button button = new Button();
+                    button.Width = 160;
+                    button.Height = 128;
+                    button.Margin = new Padding(7);
+                    button.FlatStyle = FlatStyle.Flat;
+                    button.FlatAppearance.BorderColor = UiTheme.Border;
+                    button.BackColor = product.Quantity <= product.MinimumQuantity
+                        ? Color.FromArgb(255, 247, 237)
+                        : Color.FromArgb(248, 250, 252);
+                    button.ForeColor = UiTheme.Text;
+                    button.Font = UiTheme.FontBold;
+                    button.TextAlign = ContentAlignment.MiddleLeft;
+                    button.Text =
+                        product.Category.ToUpperInvariant() + "\n\n" +
+                        product.Name + "\n" +
+                        product.SalePrice.ToString("0.000") + " DT\n" +
+                        "Stock: " + product.Quantity;
+                    button.Tag = product;
+                    button.Click += delegate(object sender, EventArgs e)
+                    {
+                        Button source = sender as Button;
+                        Product selected = source == null ? null : source.Tag as Product;
+                        if (selected != null)
+                        {
+                            AddProductToCart(!string.IsNullOrEmpty(selected.Barcode) ? selected.Barcode : selected.Name);
+                        }
+                    };
+                    productButtonsPanel.Controls.Add(button);
+                }
+
+                productButtonsPanel.Top = 0;
+                FitProductButtonsToViewport();
+            }
+            finally
+            {
+                productButtonsPanel.ResumeLayout(true);
+                SetRedraw(productButtonsPanel, true);
+            }
         }
 
         private void UpdateProductScrollBar()
@@ -989,6 +1044,33 @@ namespace OlyDrugstorePOS
         {
             LayoutSalesScreen();
             LayoutProductsScreen();
+        }
+
+        private void ScheduleResponsiveLayout()
+        {
+            if (responsiveLayoutTimer == null)
+            {
+                ApplyResponsiveLayout();
+                return;
+            }
+
+            responsiveLayoutTimer.Stop();
+            responsiveLayoutTimer.Start();
+        }
+
+        private void SetRedraw(Control control, bool enabled)
+        {
+            if (control == null || !control.IsHandleCreated)
+            {
+                return;
+            }
+
+            SendMessage(control.Handle, WM_SETREDRAW, enabled ? new IntPtr(1) : IntPtr.Zero, IntPtr.Zero);
+            if (enabled)
+            {
+                control.Invalidate(true);
+                control.Update();
+            }
         }
 
         private void LayoutSalesScreen()
@@ -1408,9 +1490,17 @@ namespace OlyDrugstorePOS
         {
             if (cartGrid != null)
             {
-                cartGrid.DataSource = null;
-                cartGrid.DataSource = cart.ToList();
-                FormatCartGrid();
+                SetRedraw(cartGrid, false);
+                try
+                {
+                    cartGrid.DataSource = null;
+                    cartGrid.DataSource = cart.ToList();
+                    FormatCartGrid();
+                }
+                finally
+                {
+                    SetRedraw(cartGrid, true);
+                }
             }
 
             decimal discount = saleDiscountInput != null ? saleDiscountInput.Value : 0;

@@ -3,6 +3,32 @@ using System.Windows.Forms;
 
 namespace OlyDrugstorePOS
 {
+    public class SmoothPanel : Panel
+    {
+        public SmoothPanel()
+        {
+            DoubleBuffered = true;
+            ResizeRedraw = true;
+        }
+    }
+
+    public class SmoothFlowLayoutPanel : FlowLayoutPanel
+    {
+        public SmoothFlowLayoutPanel()
+        {
+            DoubleBuffered = true;
+            ResizeRedraw = true;
+        }
+    }
+
+    public class SmoothDataGridView : DataGridView
+    {
+        public SmoothDataGridView()
+        {
+            DoubleBuffered = true;
+        }
+    }
+
     public static class UiTheme
     {
         public static readonly Color Background = Color.FromArgb(241, 245, 249);
@@ -21,7 +47,7 @@ namespace OlyDrugstorePOS
 
         public static Panel CardPanel()
         {
-            Panel panel = new Panel();
+            Panel panel = new SmoothPanel();
             panel.BackColor = Card;
             panel.BorderStyle = BorderStyle.FixedSingle;
             return panel;
@@ -85,7 +111,7 @@ namespace OlyDrugstorePOS
 
         public static DataGridView Grid()
         {
-            DataGridView grid = new DataGridView();
+            DataGridView grid = new SmoothDataGridView();
             grid.BackgroundColor = Card;
             grid.BorderStyle = BorderStyle.None;
             grid.RowHeadersVisible = false;
