@@ -75,7 +75,7 @@ namespace OlyDrugstorePOS
         {
             Text = "Oly Drugstore POS - " + user.FullName;
             WindowState = FormWindowState.Maximized;
-            MinimumSize = new Size(1180, 760);
+            MinimumSize = new Size(980, 640);
             BackColor = UiTheme.Background;
             Font = UiTheme.FontNormal;
 
@@ -98,6 +98,8 @@ namespace OlyDrugstorePOS
             }
             BuildSettingsTab();
             RefreshText();
+            Shown += delegate { ApplyResponsiveLayout(); };
+            Resize += delegate { ApplyResponsiveLayout(); };
         }
 
         private Control BuildTopBar()
@@ -195,6 +197,7 @@ namespace OlyDrugstorePOS
             Panel productCard = UiTheme.CardPanel();
             productCard.Dock = DockStyle.Fill;
             productCard.Padding = new Padding(18);
+            productCard.AutoScroll = true;
             shell.Controls.Add(productCard, 0, 0);
 
             Label productTitle = CardTitle("Catalogue / Scanner", 18, 14);
@@ -231,6 +234,7 @@ namespace OlyDrugstorePOS
             productCard.Controls.Add(addQuantityInput);
 
             Button quantityDownButton = UiTheme.SecondaryButton("-");
+            quantityDownButton.Name = "quantityDownButton";
             quantityDownButton.Left = 370;
             quantityDownButton.Top = 84;
             quantityDownButton.Width = 52;
@@ -240,6 +244,7 @@ namespace OlyDrugstorePOS
             productCard.Controls.Add(quantityDownButton);
 
             Button quantityUpButton = UiTheme.SecondaryButton("+");
+            quantityUpButton.Name = "quantityUpButton";
             quantityUpButton.Left = 430;
             quantityUpButton.Top = 84;
             quantityUpButton.Width = 52;
@@ -308,6 +313,7 @@ namespace OlyDrugstorePOS
             Panel checkoutCard = UiTheme.CardPanel();
             checkoutCard.Dock = DockStyle.Fill;
             checkoutCard.Padding = new Padding(18);
+            checkoutCard.AutoScroll = true;
             shell.Controls.Add(checkoutCard, 1, 0);
 
             checkoutCard.Controls.Add(CardTitle("Ticket en cours", 18, 14));
@@ -437,6 +443,7 @@ namespace OlyDrugstorePOS
             Panel listCard = UiTheme.CardPanel();
             listCard.Dock = DockStyle.Fill;
             listCard.Padding = new Padding(18);
+            listCard.AutoScroll = true;
             shell.Controls.Add(listCard, 0, 0);
             listCard.Controls.Add(CardTitle("Stock par magasin", 18, 14));
 
@@ -452,6 +459,7 @@ namespace OlyDrugstorePOS
             Panel form = UiTheme.CardPanel();
             form.Dock = DockStyle.Fill;
             form.Padding = new Padding(22);
+            form.AutoScroll = true;
             shell.Controls.Add(form, 1, 0);
             form.Controls.Add(CardTitle("Fiche produit", 22, 18));
 
@@ -644,6 +652,7 @@ namespace OlyDrugstorePOS
             tab.Name = name;
             tab.BackColor = UiTheme.Background;
             tab.Padding = new Padding(14);
+            tab.AutoScroll = true;
             tabs.TabPages.Add(tab);
             return tab;
         }
@@ -930,9 +939,8 @@ namespace OlyDrugstorePOS
             }
 
             productButtonsPanel.ResumeLayout();
-            productButtonsPanel.Height = Math.Max(productViewportPanel.Height, productButtonsPanel.PreferredSize.Height + 12);
             productButtonsPanel.Top = 0;
-            UpdateProductScrollBar();
+            FitProductButtonsToViewport();
         }
 
         private void UpdateProductScrollBar()
@@ -966,7 +974,7 @@ namespace OlyDrugstorePOS
 
         private void SyncProductScrollBarFromPanel()
         {
-            if (productButtonsPanel == null || productScrollBar == null || !productScrollBar.Enabled)
+            if (productButtonsPanel == null || productViewportPanel == null || productScrollBar == null || !productScrollBar.Enabled)
             {
                 return;
             }
@@ -975,6 +983,322 @@ namespace OlyDrugstorePOS
             int current = Math.Min(scrollableHeight, Math.Max(0, -productButtonsPanel.Top));
             int maxValue = Math.Max(productScrollBar.Minimum, productScrollBar.Maximum - productScrollBar.LargeChange + 1);
             productScrollBar.Value = Math.Min(maxValue, current);
+        }
+
+        private void ApplyResponsiveLayout()
+        {
+            LayoutSalesScreen();
+            LayoutProductsScreen();
+        }
+
+        private void LayoutSalesScreen()
+        {
+            if (productViewportPanel == null || productButtonsPanel == null || productScrollBar == null || cartGrid == null)
+            {
+                return;
+            }
+
+            Control productCard = productViewportPanel.Parent;
+            Control checkoutCard = cartGrid.Parent;
+            if (productCard == null || checkoutCard == null || productCard.ClientSize.Width <= 0 || checkoutCard.ClientSize.Width <= 0)
+            {
+                return;
+            }
+
+            int pad = 18;
+            int productWidth = productCard.ClientSize.Width;
+            int productHeight = productCard.ClientSize.Height;
+            int fieldTop = 84;
+            int gap = 8;
+            Control quantityDownButton = FindNamedControl(productCard, "quantityDownButton");
+            Control quantityUpButton = FindNamedControl(productCard, "quantityUpButton");
+            Control addButton = FindNamedControl(productCard, "addButton");
+            if (quantityDownButton != null && quantityUpButton != null && addButton != null && searchTextBox != null)
+            {
+                addButton.Width = productWidth < 560 ? 104 : 130;
+                addButton.Left = Math.Max(pad, productWidth - pad - addButton.Width);
+                addButton.Top = fieldTop;
+                quantityUpButton.Left = addButton.Left - gap - quantityUpButton.Width;
+                quantityUpButton.Top = fieldTop;
+                quantityDownButton.Left = quantityUpButton.Left - gap - quantityDownButton.Width;
+                quantityDownButton.Top = fieldTop;
+                addQuantityInput.Left = quantityDownButton.Left - gap - addQuantityInput.Width;
+                addQuantityInput.Top = fieldTop;
+                searchTextBox.Left = pad;
+                searchTextBox.Top = fieldTop;
+                searchTextBox.Width = Math.Max(160, addQuantityInput.Left - pad - gap);
+                Control scannerLabel = FindNamedControl(productCard, "scannerLabel");
+                if (scannerLabel != null)
+                {
+                    scannerLabel.Left = pad;
+                    scannerLabel.Width = searchTextBox.Width;
+                }
+
+                Control quantityLabel = FindNamedControl(productCard, "addQuantityLabel");
+                if (quantityLabel != null)
+                {
+                    quantityLabel.Left = addQuantityInput.Left;
+                    quantityLabel.Top = 52;
+                    quantityLabel.Width = 140;
+                }
+            }
+
+            int mainTop = 158;
+            int mainHeight = Math.Max(240, productHeight - mainTop - pad);
+            int categoryWidth = Math.Min(170, Math.Max(118, productWidth / 4));
+            categoryButtonsPanel.Left = pad;
+            categoryButtonsPanel.Top = mainTop;
+            categoryButtonsPanel.Width = categoryWidth;
+            categoryButtonsPanel.Height = mainHeight;
+
+            productScrollBar.Width = 44;
+            productScrollBar.Left = Math.Max(categoryButtonsPanel.Right + 130, productWidth - pad - productScrollBar.Width);
+            productScrollBar.Top = mainTop;
+            productScrollBar.Height = mainHeight;
+
+            productViewportPanel.Left = categoryButtonsPanel.Right + 10;
+            productViewportPanel.Top = mainTop;
+            productViewportPanel.Width = Math.Max(150, productScrollBar.Left - productViewportPanel.Left - 10);
+            productViewportPanel.Height = mainHeight;
+            productButtonsPanel.Width = productViewportPanel.Width;
+            FitProductButtonsToViewport();
+
+            int checkoutWidth = Math.Max(300, checkoutCard.ClientSize.Width - (pad * 2));
+            int checkoutHeight = checkoutCard.ClientSize.Height;
+            bool compactCheckout = checkoutHeight < 500;
+            cartGrid.Left = pad;
+            cartGrid.Top = 56;
+            cartGrid.Width = checkoutWidth;
+            cartGrid.Height = compactCheckout ? 92 : Math.Max(120, Math.Min(210, checkoutHeight - 380));
+            FitCartGridColumns();
+
+            int actionsTop = cartGrid.Bottom + (compactCheckout ? 8 : 18);
+            LayoutCheckoutActions(checkoutCard, checkoutWidth, actionsTop);
+            int inputTop = actionsTop + (checkoutWidth >= 420 ? 74 : 112);
+            LayoutCheckoutInputs(checkoutWidth, inputTop, checkoutHeight);
+        }
+
+        private void LayoutCheckoutActions(Control checkoutCard, int contentWidth, int top)
+        {
+            Control removeButton = FindNamedControl(checkoutCard, "removeButton");
+            Control[] buttons = new Control[] { removeButton, decreaseQuantityButton, increaseQuantityButton, clearCartButton };
+            if (buttons.Any(button => button == null))
+            {
+                return;
+            }
+
+            int pad = 18;
+            int gap = 8;
+            if (contentWidth >= 420)
+            {
+                int buttonWidth = (contentWidth - (gap * 3)) / 4;
+                for (int index = 0; index < buttons.Length; index++)
+                {
+                    buttons[index].Left = pad + (index * (buttonWidth + gap));
+                    buttons[index].Top = top;
+                    buttons[index].Width = buttonWidth;
+                    buttons[index].Height = 46;
+                }
+                return;
+            }
+
+            int smallWidth = (contentWidth - gap) / 2;
+            for (int index = 0; index < buttons.Length; index++)
+            {
+                buttons[index].Left = pad + ((index % 2) * (smallWidth + gap));
+                buttons[index].Top = top + ((index / 2) * 52);
+                buttons[index].Width = smallWidth;
+                buttons[index].Height = 46;
+            }
+        }
+
+        private void LayoutCheckoutInputs(int contentWidth, int inputTop, int checkoutHeight)
+        {
+            int pad = 18;
+            int gap = 10;
+            int printTop = Math.Max(inputTop + 178, checkoutHeight - 62);
+            int checkoutTop = printTop - 56;
+            int totalTop = checkoutTop - 42;
+            int fieldsTop = Math.Min(inputTop, totalTop - 68);
+            if (checkoutHeight < 500)
+            {
+                fieldsTop = inputTop;
+                totalTop = fieldsTop + 48;
+                checkoutTop = totalTop + 36;
+                printTop = checkoutTop + 50;
+            }
+            if (fieldsTop < cartGrid.Bottom + 66)
+            {
+                fieldsTop = cartGrid.Bottom + 66;
+                totalTop = fieldsTop + 62;
+                checkoutTop = totalTop + 42;
+                printTop = checkoutTop + 56;
+            }
+
+            employeeDiscountCheckBox.Left = pad;
+            employeeDiscountCheckBox.Top = fieldsTop - 58;
+            employeeDiscountCheckBox.Width = Math.Min(160, contentWidth / 2);
+            if (contentWidth < 380)
+            {
+                returnCheckBox.Left = pad + employeeDiscountCheckBox.Width + gap;
+                returnCheckBox.Top = fieldsTop - 58;
+                returnCheckBox.Width = Math.Max(90, contentWidth - employeeDiscountCheckBox.Width - gap);
+                debtCheckBox.Left = pad;
+                debtCheckBox.Top = fieldsTop - 32;
+                debtCheckBox.Width = 100;
+            }
+            else
+            {
+                returnCheckBox.Left = pad + employeeDiscountCheckBox.Width + gap;
+                returnCheckBox.Top = fieldsTop - 58;
+                returnCheckBox.Width = 96;
+                debtCheckBox.Left = returnCheckBox.Right + gap;
+                debtCheckBox.Top = fieldsTop - 58;
+                debtCheckBox.Width = 90;
+            }
+
+            int columnWidth = Math.Max(92, (contentWidth - (gap * 2)) / 3);
+            MoveLabel("discountLabel", pad, fieldsTop - 26, columnWidth);
+            saleDiscountInput.Left = pad;
+            saleDiscountInput.Top = fieldsTop;
+            saleDiscountInput.Width = columnWidth;
+
+            MoveLabel("paymentLabel", pad + columnWidth + gap, fieldsTop - 26, columnWidth);
+            paymentComboBox.Left = pad + columnWidth + gap;
+            paymentComboBox.Top = fieldsTop;
+            paymentComboBox.Width = columnWidth;
+
+            MoveLabel("customerLabel", pad + (columnWidth + gap) * 2, fieldsTop - 26, columnWidth);
+            customerTextBox.Left = pad + (columnWidth + gap) * 2;
+            customerTextBox.Top = fieldsTop;
+            customerTextBox.Width = contentWidth - (columnWidth + gap) * 2;
+
+            totalLabel.Left = pad;
+            totalLabel.Top = totalTop;
+            totalLabel.Width = contentWidth;
+            printReceiptButton.Left = pad;
+            printReceiptButton.Top = printTop;
+            printReceiptButton.Width = contentWidth;
+            Control checkoutButton = FindNamedControl(printReceiptButton.Parent, "checkoutButton");
+            if (checkoutButton != null)
+            {
+                checkoutButton.Left = pad;
+                checkoutButton.Top = checkoutTop;
+                checkoutButton.Width = contentWidth;
+            }
+        }
+
+        private void FitProductButtonsToViewport()
+        {
+            if (productButtonsPanel == null || productViewportPanel == null)
+            {
+                return;
+            }
+
+            int available = Math.Max(140, productViewportPanel.ClientSize.Width - 18);
+            int tileWidth = available >= 360 ? (available / 2) - 18 : available - 14;
+            tileWidth = Math.Max(132, Math.Min(190, tileWidth));
+            foreach (Control control in productButtonsPanel.Controls)
+            {
+                control.Width = tileWidth;
+            }
+
+            productButtonsPanel.Height = Math.Max(productViewportPanel.Height, productButtonsPanel.PreferredSize.Height + 12);
+            UpdateProductScrollBar();
+        }
+
+        private void LayoutProductsScreen()
+        {
+            if (stockGrid == null || productNameInput == null)
+            {
+                return;
+            }
+
+            Control listCard = stockGrid.Parent;
+            Control form = productNameInput.Parent;
+            if (listCard == null || form == null)
+            {
+                return;
+            }
+
+            int pad = 18;
+            stockGrid.Left = pad;
+            stockGrid.Top = 58;
+            stockGrid.Width = Math.Max(300, listCard.ClientSize.Width - (pad * 2));
+            stockGrid.Height = Math.Max(250, listCard.ClientSize.Height - 76);
+            FitProductsGridColumns();
+
+            int formPad = 22;
+            int contentWidth = Math.Max(260, form.ClientSize.Width - (formPad * 2));
+            productNameInput.Left = formPad;
+            productNameInput.Width = contentWidth;
+            productCategoryInput.Left = formPad;
+            productCategoryInput.Width = contentWidth;
+            barcodeInput.Left = formPad;
+            barcodeInput.Width = contentWidth;
+            MoveLabel("productNameLabel", formPad, 76, contentWidth);
+            MoveLabel("productCategoryLabel", formPad, 142, contentWidth);
+            MoveLabel("barcodeLabel", formPad, 208, contentWidth);
+
+            int twoColumnWidth = Math.Max(118, (contentWidth - 16) / 2);
+            LayoutField(form, "purchaseLabel", purchasePriceInput, formPad, 274, twoColumnWidth);
+            LayoutField(form, "salePriceLabel", salePriceInput, formPad + twoColumnWidth + 16, 274, twoColumnWidth);
+
+            int threeColumnWidth = Math.Max(82, (contentWidth - 24) / 3);
+            LayoutField(form, "taxLabel", taxInput, formPad, 340, threeColumnWidth);
+            LayoutField(form, "quantityLabel", quantityInput, formPad + threeColumnWidth + 12, 340, threeColumnWidth);
+            LayoutField(form, "minimumLabel", minimumInput, formPad + ((threeColumnWidth + 12) * 2), 340, threeColumnWidth);
+
+            int bottomWidth = Math.Max(120, (contentWidth - 16) / 2);
+            MoveLabel("expiryLabel", formPad, 406, bottomWidth);
+            expiryInput.Left = formPad;
+            expiryInput.Width = bottomWidth;
+            MoveLabel("storeFieldLabel", formPad + bottomWidth + 16, 406, bottomWidth);
+            productStoreInput.Left = formPad + bottomWidth + 16;
+            productStoreInput.Width = bottomWidth;
+
+            Control saveButton = FindNamedControl(form, "saveProductButton");
+            Control deleteButton = FindNamedControl(form, "deleteProductButton");
+            if (saveButton != null && deleteButton != null)
+            {
+                int buttonWidth = Math.Max(120, (contentWidth - 16) / 2);
+                saveButton.Left = formPad;
+                saveButton.Width = buttonWidth;
+                deleteButton.Left = formPad + buttonWidth + 16;
+                deleteButton.Width = buttonWidth;
+            }
+        }
+
+        private void LayoutField(Control parent, string labelName, Control input, int left, int top, int width)
+        {
+            MoveLabel(labelName, left, top, width);
+            input.Left = left;
+            input.Top = top + 26;
+            input.Width = width;
+        }
+
+        private void MoveLabel(string name, int left, int top, int width)
+        {
+            Control label = FindNamedControl(this, name);
+            if (label == null)
+            {
+                return;
+            }
+
+            label.Left = left;
+            label.Top = top;
+            label.Width = width;
+        }
+
+        private Control FindNamedControl(Control parent, string name)
+        {
+            if (parent == null)
+            {
+                return null;
+            }
+
+            Control[] matches = parent.Controls.Find(name, true);
+            return matches.Length == 0 ? null : matches[0];
         }
 
         private void HandleSearchChanged()
@@ -1329,6 +1653,26 @@ namespace OlyDrugstorePOS
             SetColumnWidth(grid, "Quantity", 74);
             SetColumnWidth(grid, "MinimumQuantity", 74);
             SetColumnWidth(grid, "ExpiryDate", 110);
+            if (adminView)
+            {
+                FitProductsGridColumns();
+            }
+        }
+
+        private void FitProductsGridColumns()
+        {
+            if (stockGrid == null || stockGrid.Columns.Count == 0)
+            {
+                return;
+            }
+
+            int visibleWidth = Math.Max(320, stockGrid.ClientSize.Width - 24);
+            SetColumnWidth(stockGrid, "Name", Math.Max(95, visibleWidth * 32 / 100));
+            SetColumnWidth(stockGrid, "Category", Math.Max(62, visibleWidth * 18 / 100));
+            SetColumnWidth(stockGrid, "PurchasePrice", Math.Max(52, visibleWidth * 15 / 100));
+            SetColumnWidth(stockGrid, "SalePrice", Math.Max(52, visibleWidth * 15 / 100));
+            SetColumnWidth(stockGrid, "Quantity", Math.Max(38, visibleWidth * 10 / 100));
+            SetColumnWidth(stockGrid, "MinimumQuantity", Math.Max(38, visibleWidth * 10 / 100));
         }
 
         private void FormatCartGrid()
@@ -1337,7 +1681,7 @@ namespace OlyDrugstorePOS
             HideColumn(cartGrid, "TaxRate");
             HideColumn(cartGrid, "Discount");
             RenameColumn(cartGrid, "ProductName", Localization.T("Name"));
-            RenameColumn(cartGrid, "Quantity", Localization.T("Quantity"));
+            RenameColumn(cartGrid, "Quantity", "Qty");
             RenameColumn(cartGrid, "UnitPrice", "Prix");
             RenameColumn(cartGrid, "LineTotal", Localization.T("Total"));
             AlignColumn(cartGrid, "Quantity", DataGridViewContentAlignment.MiddleCenter);
@@ -1347,6 +1691,21 @@ namespace OlyDrugstorePOS
             SetColumnWidth(cartGrid, "Quantity", 70);
             SetColumnWidth(cartGrid, "UnitPrice", 80);
             SetColumnWidth(cartGrid, "LineTotal", 90);
+            FitCartGridColumns();
+        }
+
+        private void FitCartGridColumns()
+        {
+            if (cartGrid == null || cartGrid.Columns.Count == 0)
+            {
+                return;
+            }
+
+            int visibleWidth = Math.Max(300, cartGrid.ClientSize.Width - 24);
+            SetColumnWidth(cartGrid, "ProductName", Math.Max(120, visibleWidth * 42 / 100));
+            SetColumnWidth(cartGrid, "Quantity", Math.Max(58, visibleWidth * 17 / 100));
+            SetColumnWidth(cartGrid, "UnitPrice", Math.Max(64, visibleWidth * 19 / 100));
+            SetColumnWidth(cartGrid, "LineTotal", Math.Max(70, visibleWidth * 22 / 100));
         }
 
         private void HideColumn(DataGridView grid, string columnName)
