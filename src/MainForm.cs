@@ -84,6 +84,11 @@ namespace OlyDrugstorePOS
         private DataGridView stockMovementGrid;
         private DataGridView usersGrid;
         private DataGridView purchasesGrid;
+        private DataGridView productProfitGrid;
+        private DataGridView cashierPerformanceGrid;
+        private DataGridView paymentSummaryGrid;
+        private DataGridView categorySummaryGrid;
+        private Label advancedReportKpiLabel;
         private TextBox userUsernameInput;
         private TextBox userPasswordInput;
         private TextBox userFullNameInput;
@@ -838,6 +843,9 @@ namespace OlyDrugstorePOS
             TabControl adminTabs = new TabControl();
             adminTabs.Dock = DockStyle.Fill;
             adminTabs.Font = UiTheme.FontBold;
+            adminTabs.Padding = new Point(10, 6);
+            adminTabs.ItemSize = new Size(124, 32);
+            adminTabs.SizeMode = TabSizeMode.Fixed;
             tab.Controls.Add(adminTabs);
 
             BuildDebtAdminPage(adminTabs);
@@ -845,6 +853,7 @@ namespace OlyDrugstorePOS
             BuildStockLogAdminPage(adminTabs);
             BuildUsersAdminPage(adminTabs);
             BuildRestockAdminPage(adminTabs);
+            BuildAdvancedReportsAdminPage(adminTabs);
             BuildFilesAdminPage(adminTabs);
         }
 
@@ -1027,6 +1036,56 @@ namespace OlyDrugstorePOS
             purchasesGrid.Height = 520;
             purchasesGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             list.Controls.Add(purchasesGrid);
+        }
+
+        private void BuildAdvancedReportsAdminPage(TabControl owner)
+        {
+            TabPage page = InnerTab(owner, Localization.T("AdvancedReports"));
+            TableLayoutPanel shell = PageGrid(2, 3);
+            shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 120));
+            shell.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            shell.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            page.Controls.Add(shell);
+
+            Panel kpiCard = UiTheme.CardPanel();
+            kpiCard.Dock = DockStyle.Fill;
+            kpiCard.Padding = new Padding(18);
+            shell.Controls.Add(kpiCard, 0, 0);
+            shell.SetColumnSpan(kpiCard, 2);
+            kpiCard.Controls.Add(CardTitle(Localization.T("AdvancedReports"), 18, 14));
+            advancedReportKpiLabel = new Label();
+            advancedReportKpiLabel.Left = 18;
+            advancedReportKpiLabel.Top = 58;
+            advancedReportKpiLabel.Width = 980;
+            advancedReportKpiLabel.Height = 56;
+            advancedReportKpiLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            advancedReportKpiLabel.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+            advancedReportKpiLabel.ForeColor = UiTheme.Text;
+            kpiCard.Controls.Add(advancedReportKpiLabel);
+
+            productProfitGrid = AddReportGrid(shell, Localization.T("ProductProfit"), 0, 1);
+            cashierPerformanceGrid = AddReportGrid(shell, Localization.T("CashierPerformance"), 1, 1);
+            paymentSummaryGrid = AddReportGrid(shell, Localization.T("PaymentSummary"), 0, 2);
+            categorySummaryGrid = AddReportGrid(shell, Localization.T("CategorySummary"), 1, 2);
+        }
+
+        private DataGridView AddReportGrid(TableLayoutPanel shell, string title, int column, int row)
+        {
+            Panel card = UiTheme.CardPanel();
+            card.Dock = DockStyle.Fill;
+            card.Padding = new Padding(18);
+            shell.Controls.Add(card, column, row);
+            card.Controls.Add(CardTitle(title, 18, 14));
+            DataGridView grid = UiTheme.Grid();
+            grid.Left = 18;
+            grid.Top = 58;
+            grid.Width = 420;
+            grid.Height = 180;
+            grid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            card.Controls.Add(grid);
+            return grid;
         }
 
         private void BuildFilesAdminPage(TabControl owner)
@@ -2510,6 +2569,7 @@ namespace OlyDrugstorePOS
             RefreshUsersGrid();
             RefreshRestockProducts();
             RefreshPurchasesGrid();
+            RefreshAdvancedReports();
         }
 
         private void RefreshDebtGrid()
@@ -2702,6 +2762,126 @@ namespace OlyDrugstorePOS
                     User = p.Username
                 })
                 .ToList();
+        }
+
+        private void RefreshAdvancedReports()
+        {
+            if (advancedReportKpiLabel == null) return;
+
+            List<Sale> sales = store.Database.Sales.Where(s => s.StoreId == activeStoreId).ToList();
+            List<ReportLineMetric> productMetrics = BuildReportLineMetrics(sales);
+            decimal revenue = sales.Sum(s => s.IsReturn ? -s.Total : s.Total);
+            decimal estimatedProfit = productMetrics.Sum(m => m.Profit);
+            decimal margin = revenue <= 0 ? 0 : (estimatedProfit / revenue) * 100;
+            decimal stockValue = store.Database.Products
+                .Where(p => p.StoreId == activeStoreId)
+                .Sum(p => p.Quantity * p.PurchasePrice);
+            decimal debtOpen = sales.Where(s => s.IsDebt && !s.IsDebtPaid).Sum(s => s.Total);
+
+            advancedReportKpiLabel.Text =
+                Localization.T("Revenue") + ": " + Money(revenue) + "    " +
+                Localization.T("Profit") + ": " + Money(estimatedProfit) + "    " +
+                Localization.T("Margin") + ": " + margin.ToString("0.0") + "%\n" +
+                Localization.T("StockValue") + ": " + Money(stockValue) + "    " +
+                Localization.T("OpenDebt") + ": " + Money(debtOpen);
+
+            if (productProfitGrid != null)
+            {
+                productProfitGrid.DataSource = null;
+                productProfitGrid.DataSource = productMetrics
+                    .GroupBy(m => m.Product)
+                    .Select(g => new ProductProfitRow
+                    {
+                        Product = g.Key,
+                        Quantity = g.Sum(x => x.Quantity),
+                        Revenue = Money(g.Sum(x => x.Revenue)),
+                        Profit = Money(g.Sum(x => x.Profit)),
+                        Margin = g.Sum(x => x.Revenue) <= 0 ? "0%" : ((g.Sum(x => x.Profit) / g.Sum(x => x.Revenue)) * 100).ToString("0.0") + "%"
+                    })
+                    .OrderByDescending(r => ParseMoneyText(r.Profit))
+                    .Take(50)
+                    .ToList();
+            }
+
+            if (cashierPerformanceGrid != null)
+            {
+                cashierPerformanceGrid.DataSource = null;
+                cashierPerformanceGrid.DataSource = sales
+                    .GroupBy(s => s.CashierUsername)
+                    .Select(g => new CashierReportRow
+                    {
+                        Cashier = g.Key,
+                        Tickets = g.Count(),
+                        Revenue = Money(g.Sum(s => s.IsReturn ? -s.Total : s.Total)),
+                        Returns = g.Count(s => s.IsReturn),
+                        Debts = g.Count(s => s.IsDebt && !s.IsDebtPaid)
+                    })
+                    .OrderByDescending(r => ParseMoneyText(r.Revenue))
+                    .ToList();
+            }
+
+            if (paymentSummaryGrid != null)
+            {
+                paymentSummaryGrid.DataSource = null;
+                paymentSummaryGrid.DataSource = sales
+                    .GroupBy(s => s.PaymentMethod)
+                    .Select(g => new PaymentReportRow
+                    {
+                        Payment = g.Key,
+                        Tickets = g.Count(),
+                        Total = Money(g.Sum(s => s.IsReturn ? -s.Total : s.Total))
+                    })
+                    .OrderByDescending(r => ParseMoneyText(r.Total))
+                    .ToList();
+            }
+
+            if (categorySummaryGrid != null)
+            {
+                categorySummaryGrid.DataSource = null;
+                categorySummaryGrid.DataSource = productMetrics
+                    .GroupBy(m => m.Category)
+                    .Select(g => new CategoryReportRow
+                    {
+                        Category = g.Key,
+                        Quantity = g.Sum(x => x.Quantity),
+                        Revenue = Money(g.Sum(x => x.Revenue)),
+                        Profit = Money(g.Sum(x => x.Profit))
+                    })
+                    .OrderByDescending(r => ParseMoneyText(r.Revenue))
+                    .ToList();
+            }
+        }
+
+        private List<ReportLineMetric> BuildReportLineMetrics(List<Sale> sales)
+        {
+            List<ReportLineMetric> metrics = new List<ReportLineMetric>();
+            foreach (Sale sale in sales)
+            {
+                foreach (SaleItem item in sale.Items)
+                {
+                    Product product = store.Database.Products.FirstOrDefault(p => p.Id == item.ProductId);
+                    decimal purchasePrice = product == null ? 0 : product.PurchasePrice;
+                    string category = product == null ? "" : product.Category;
+                    int sign = sale.IsReturn ? -1 : 1;
+                    metrics.Add(new ReportLineMetric
+                    {
+                        Product = item.ProductName,
+                        Category = category,
+                        Quantity = item.Quantity * sign,
+                        Revenue = item.LineTotal * sign,
+                        Profit = ((item.UnitPrice - purchasePrice) * item.Quantity - item.Discount) * sign
+                    });
+                }
+            }
+            return metrics;
+        }
+
+        private decimal ParseMoneyText(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return 0;
+            decimal result;
+            string normalized = value.Replace("DT", "").Trim();
+            return decimal.TryParse(normalized, out result) ? result : 0;
         }
 
         private void ManualBackup()
@@ -3433,6 +3613,48 @@ namespace OlyDrugstorePOS
             public int Quantity { get; set; }
             public string UnitCost { get; set; }
             public string User { get; set; }
+        }
+
+        private class ReportLineMetric
+        {
+            public string Product { get; set; }
+            public string Category { get; set; }
+            public int Quantity { get; set; }
+            public decimal Revenue { get; set; }
+            public decimal Profit { get; set; }
+        }
+
+        private class ProductProfitRow
+        {
+            public string Product { get; set; }
+            public int Quantity { get; set; }
+            public string Revenue { get; set; }
+            public string Profit { get; set; }
+            public string Margin { get; set; }
+        }
+
+        private class CashierReportRow
+        {
+            public string Cashier { get; set; }
+            public int Tickets { get; set; }
+            public string Revenue { get; set; }
+            public int Returns { get; set; }
+            public int Debts { get; set; }
+        }
+
+        private class PaymentReportRow
+        {
+            public string Payment { get; set; }
+            public int Tickets { get; set; }
+            public string Total { get; set; }
+        }
+
+        private class CategoryReportRow
+        {
+            public string Category { get; set; }
+            public int Quantity { get; set; }
+            public string Revenue { get; set; }
+            public string Profit { get; set; }
         }
     }
 }

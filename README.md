@@ -32,6 +32,7 @@ The first version targets old store computers and peripherals:
 - Category performance report with most/least sold products
 - ABC stock strategy recommendations
 - Admin action to apply ABC minimum stock levels
+- Advanced admin reports for revenue, profit, margin, stock value, cashier performance, payment totals, and category totals
 - Admin debt management with paid/unpaid tracking
 - Admin low-stock and expiry alert tables
 - Stock movement history for sales, returns, edits, and purchases
