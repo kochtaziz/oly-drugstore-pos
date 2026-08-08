@@ -183,7 +183,7 @@ namespace OlyDrugstorePOS
             Fr["RestoreBackup"] = "Restaurer";
             Fr["ExportProducts"] = "Exporter produits";
             Fr["ExportSales"] = "Exporter ventes";
-            Fr["ImportProducts"] = "Importer produits";
+            Fr["ImportProducts"] = "Importer produits CSV/Excel";
 
             En["Login"] = "Login";
             En["Username"] = "Username";
@@ -357,7 +357,7 @@ namespace OlyDrugstorePOS
             En["RestoreBackup"] = "Restore backup";
             En["ExportProducts"] = "Export products";
             En["ExportSales"] = "Export sales";
-            En["ImportProducts"] = "Import products";
+            En["ImportProducts"] = "Import CSV/Excel products";
         }
 
         public static string T(string key)

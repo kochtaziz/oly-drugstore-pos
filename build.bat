@@ -6,5 +6,5 @@ if not exist "%CSC%" (
   exit /b 1
 )
 if not exist bin mkdir bin
-"%CSC%" /target:winexe /out:bin\OlyDrugstorePOS.exe /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Xml.dll src\*.cs
+"%CSC%" /target:winexe /out:bin\OlyDrugstorePOS.exe /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Xml.dll /reference:System.Xml.Linq.dll /reference:System.IO.Compression.dll /reference:System.IO.Compression.FileSystem.dll src\*.cs
 endlocal

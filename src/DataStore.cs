@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 
 namespace OlyDrugstorePOS
@@ -409,39 +412,143 @@ namespace OlyDrugstorePOS
                 return 0;
             }
 
+            if (string.Equals(Path.GetExtension(sourcePath), ".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                return ImportProductsXlsx(sourcePath, storeId, username);
+            }
+
             int count = 0;
             string[] lines = File.ReadAllLines(sourcePath);
             for (int i = 1; i < lines.Length; i++)
             {
                 string[] parts = SplitCsvLine(lines[i]);
                 if (parts.Length < 9) continue;
-                string category = parts[1];
-                string name = parts[2];
-                string barcode = parts[3];
-                Product product = Database.Products.FirstOrDefault(p =>
-                    p.StoreId == storeId &&
-                    ((!string.IsNullOrEmpty(barcode) && p.Barcode == barcode) ||
-                     string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)));
-                if (product == null)
-                {
-                    product = new Product { StoreId = storeId };
-                }
-
-                int oldQuantity = product.Quantity;
-                product.Category = category;
-                product.Name = name;
-                product.Barcode = barcode;
-                product.PurchasePrice = ParseDecimal(parts[4]);
-                product.SalePrice = ParseDecimal(parts[5]);
-                product.TaxRate = ParseDecimal(parts[6]);
-                product.Quantity = ParseInt(parts[7]);
-                product.MinimumQuantity = ParseInt(parts[8]);
-                DateTime expiry;
-                product.ExpiryDate = parts.Length > 9 && DateTime.TryParse(parts[9], out expiry) ? expiry : DateTime.Today.AddMonths(12);
-                SaveProduct(product, username, "CSV import", oldQuantity);
-                count++;
+                if (ImportProductRow(parts, storeId, username, "CSV import")) count++;
             }
             return count;
+        }
+
+        private int ImportProductsXlsx(string sourcePath, string storeId, string username)
+        {
+            int count = 0;
+            using (ZipArchive archive = ZipFile.OpenRead(sourcePath))
+            {
+                List<string> sharedStrings = ReadSharedStrings(archive);
+                ZipArchiveEntry sheetEntry = archive.GetEntry("xl/worksheets/sheet1.xml");
+                if (sheetEntry == null)
+                {
+                    return 0;
+                }
+
+                XNamespace ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+                XDocument sheet;
+                using (Stream stream = sheetEntry.Open())
+                {
+                    sheet = XDocument.Load(stream);
+                }
+
+                foreach (XElement row in sheet.Descendants(ns + "row").Skip(1))
+                {
+                    Dictionary<int, string> cells = new Dictionary<int, string>();
+                    foreach (XElement cell in row.Elements(ns + "c"))
+                    {
+                        string reference = (string)cell.Attribute("r") ?? "";
+                        int column = ColumnIndex(reference);
+                        cells[column] = CellText(cell, sharedStrings, ns);
+                    }
+
+                    string[] parts = new string[10];
+                    for (int i = 0; i < parts.Length; i++)
+                    {
+                        parts[i] = cells.ContainsKey(i) ? cells[i] : "";
+                    }
+
+                    if (ImportProductRow(parts, storeId, username, "Excel import")) count++;
+                }
+            }
+            return count;
+        }
+
+        private bool ImportProductRow(string[] parts, string storeId, string username, string reason)
+        {
+            if (parts.Length < 9) return false;
+            string category = parts[1];
+            string name = parts[2];
+            string barcode = parts[3];
+            if (string.IsNullOrWhiteSpace(name)) return false;
+
+            Product product = Database.Products.FirstOrDefault(p =>
+                p.StoreId == storeId &&
+                ((!string.IsNullOrEmpty(barcode) && p.Barcode == barcode) ||
+                 string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)));
+            if (product == null)
+            {
+                product = new Product { StoreId = storeId };
+            }
+
+            int oldQuantity = product.Quantity;
+            product.Category = category;
+            product.Name = name;
+            product.Barcode = barcode;
+            product.PurchasePrice = ParseDecimal(parts[4]);
+            product.SalePrice = ParseDecimal(parts[5]);
+            product.TaxRate = ParseDecimal(parts[6]);
+            product.Quantity = ParseInt(parts[7]);
+            product.MinimumQuantity = ParseInt(parts[8]);
+            DateTime expiry;
+            product.ExpiryDate = parts.Length > 9 && DateTime.TryParse(parts[9], out expiry) ? expiry : DateTime.Today.AddMonths(12);
+            SaveProduct(product, username, reason, oldQuantity);
+            return true;
+        }
+
+        private List<string> ReadSharedStrings(ZipArchive archive)
+        {
+            List<string> values = new List<string>();
+            ZipArchiveEntry entry = archive.GetEntry("xl/sharedStrings.xml");
+            if (entry == null) return values;
+
+            XNamespace ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+            XDocument document;
+            using (Stream stream = entry.Open())
+            {
+                document = XDocument.Load(stream);
+            }
+
+            foreach (XElement item in document.Descendants(ns + "si"))
+            {
+                values.Add(string.Concat(item.Descendants(ns + "t").Select(t => (string)t)));
+            }
+            return values;
+        }
+
+        private string CellText(XElement cell, List<string> sharedStrings, XNamespace ns)
+        {
+            string type = (string)cell.Attribute("t") ?? "";
+            XElement value = cell.Element(ns + "v");
+            if (type == "inlineStr")
+            {
+                return string.Concat(cell.Descendants(ns + "t").Select(t => (string)t));
+            }
+            if (value == null) return "";
+
+            string raw = value.Value;
+            if (type == "s")
+            {
+                int index;
+                return int.TryParse(raw, out index) && index >= 0 && index < sharedStrings.Count ? sharedStrings[index] : "";
+            }
+            return raw;
+        }
+
+        private int ColumnIndex(string cellReference)
+        {
+            int index = 0;
+            foreach (char c in cellReference)
+            {
+                if (!char.IsLetter(c)) break;
+                index = (index * 26) + (char.ToUpperInvariant(c) - 'A' + 1);
+            }
+            return Math.Max(0, index - 1);
         }
 
         private string[] SplitCsvLine(string line)
@@ -481,7 +588,8 @@ namespace OlyDrugstorePOS
         private decimal ParseDecimal(string value)
         {
             decimal result;
-            return decimal.TryParse(value, out result) ? result : 0;
+            value = (value ?? "").Trim().Replace("DT", "").Replace("dt", "").Replace(",", ".");
+            return decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out result) ? result : 0;
         }
 
         private int ParseInt(string value)

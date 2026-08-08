@@ -3396,7 +3396,7 @@ namespace OlyDrugstorePOS
         private void ImportProductsCsv()
         {
             OpenFileDialog dialog = new OpenFileDialog();
-            dialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+            dialog.Filter = "Product files (*.csv;*.xlsx)|*.csv;*.xlsx|CSV files (*.csv)|*.csv|Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*";
             if (dialog.ShowDialog() != DialogResult.OK) return;
             int count = store.ImportProductsCsv(dialog.FileName, activeStoreId, user.Username);
             RefreshAll();
@@ -3846,10 +3846,28 @@ namespace OlyDrugstorePOS
             try
             {
                 PrintDocument document = new PrintDocument();
+                document.DocumentName = "Oly receipt " + sale.TicketNumber;
                 document.PrintPage += delegate(object sender, PrintPageEventArgs e)
                 {
-                    e.Graphics.DrawString(receipt, new Font("Consolas", 9), Brushes.Black, 5, 5);
+                    using (Font font = new Font("Consolas", 9))
+                    {
+                        float y = 8;
+                        foreach (string line in receipt.Replace("\r\n", "\n").Split('\n'))
+                        {
+                            e.Graphics.DrawString(line, font, Brushes.Black, 8, y);
+                            y += font.GetHeight(e.Graphics) + 2;
+                        }
+                    }
                 };
+                using (PrintDialog dialog = new PrintDialog())
+                {
+                    dialog.Document = document;
+                    dialog.UseEXDialog = true;
+                    if (dialog.ShowDialog() != DialogResult.OK)
+                    {
+                        return;
+                    }
+                }
                 document.Print();
             }
             catch

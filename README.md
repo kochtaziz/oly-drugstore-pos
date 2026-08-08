@@ -40,7 +40,8 @@ The first version targets old store computers and peripherals:
 - User management for admin/cashier accounts
 - Duplicate barcode protection per store
 - Manual backup/restore screen
-- CSV product import and product/sales export
+- CSV/XLSX product import and product/sales export
+- Printer selection dialog before ticket printing
 - Hashed stored passwords
 - Backup when closing shift
 - Bilingual FR/EN labels
@@ -95,6 +96,20 @@ Shift closing reports are printed and saved to:
 
 ```text
 shift-reports\
+```
+
+## Product Import Format
+
+Admins can import products from CSV or XLSX files. The file should use this column order:
+
+```text
+Store,Category,Name,Barcode,PurchasePrice,SalePrice,Tax,Quantity,Minimum,Expiry
+```
+
+A starter template is available in:
+
+```text
+docs\product-import-template.csv
 ```
 
 ## Future Production Steps
