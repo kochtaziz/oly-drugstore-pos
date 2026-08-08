@@ -295,10 +295,11 @@ namespace OlyDrugstorePOS
             productCard.AutoScroll = true;
             shell.Controls.Add(productCard, 0, 0);
 
-            Label productTitle = CardTitle("Catalogue / Scanner", 18, 14);
+            Label productTitle = CardTitle(Localization.T("CatalogScanner"), 18, 14);
+            productTitle.Name = "catalogScannerTitle";
             productCard.Controls.Add(productTitle);
 
-            Label scannerLabel = UiTheme.FieldLabel("Scanner / code a barres", 18, 52);
+            Label scannerLabel = UiTheme.FieldLabel(Localization.T("ScannerBarcode"), 18, 52);
             scannerLabel.Name = "scannerLabel";
             scannerLabel.Width = 260;
             productCard.Controls.Add(scannerLabel);
@@ -454,7 +455,9 @@ namespace OlyDrugstorePOS
             checkoutCard.AutoScroll = true;
             shell.Controls.Add(checkoutCard, 1, 0);
 
-            checkoutCard.Controls.Add(CardTitle("Ticket en cours", 18, 14));
+            Label currentTicketTitle = CardTitle(Localization.T("CurrentTicket"), 18, 14);
+            currentTicketTitle.Name = "currentTicketTitle";
+            checkoutCard.Controls.Add(currentTicketTitle);
 
             cartGrid = UiTheme.Grid();
             cartGrid.Left = 18;
@@ -588,7 +591,9 @@ namespace OlyDrugstorePOS
             listCard.Padding = new Padding(18);
             listCard.AutoScroll = true;
             shell.Controls.Add(listCard, 0, 0);
-            listCard.Controls.Add(CardTitle("Stock par magasin", 18, 14));
+            Label storeStockTitle = CardTitle(Localization.T("StoreStock"), 18, 14);
+            storeStockTitle.Name = "storeStockTitle";
+            listCard.Controls.Add(storeStockTitle);
 
             stockGrid = UiTheme.Grid();
             stockGrid.Left = 18;
@@ -604,7 +609,9 @@ namespace OlyDrugstorePOS
             form.Padding = new Padding(22);
             form.AutoScroll = true;
             shell.Controls.Add(form, 1, 0);
-            form.Controls.Add(CardTitle("Fiche produit", 22, 18));
+            Label productFormTitle = CardTitle(Localization.T("ProductForm"), 22, 18);
+            productFormTitle.Name = "productFormTitle";
+            form.Controls.Add(productFormTitle);
 
             productNameInput = AddTextField(form, "productNameLabel", 22, 76, 410);
             productCategoryInput = AddTextField(form, "productCategoryLabel", 22, 142, 410);
@@ -623,7 +630,7 @@ namespace OlyDrugstorePOS
             expiryInput.Format = DateTimePickerFormat.Short;
             form.Controls.Add(expiryInput);
 
-            AddLabel(form, "storeFieldLabel", "Store", 245, 406);
+            AddLabel(form, "storeFieldLabel", Localization.T("Store"), 245, 406);
             productStoreInput = new ComboBox();
             productStoreInput.DropDownStyle = ComboBoxStyle.DropDownList;
             productStoreInput.Left = 245;
@@ -664,7 +671,9 @@ namespace OlyDrugstorePOS
             sessionCard.Dock = DockStyle.Fill;
             sessionCard.Padding = new Padding(24);
             shell.Controls.Add(sessionCard, 0, 0);
-            sessionCard.Controls.Add(CardTitle("Cloture de caisse", 24, 20));
+            Label cashClosingTitle = CardTitle(Localization.T("CashClosing"), 24, 20);
+            cashClosingTitle.Name = "cashClosingTitle";
+            sessionCard.Controls.Add(cashClosingTitle);
 
             cashStatusLabel = new Label();
             cashStatusLabel.Left = 24;
@@ -713,19 +722,20 @@ namespace OlyDrugstorePOS
             movementCard.Dock = DockStyle.Fill;
             movementCard.Padding = new Padding(24);
             shell.Controls.Add(movementCard, 1, 0);
-            movementCard.Controls.Add(CardTitle("Mouvements caisse", 24, 20));
+            Label cashMovementsTitle = CardTitle(Localization.T("CashMovements"), 24, 20);
+            cashMovementsTitle.Name = "cashMovementsTitle";
+            movementCard.Controls.Add(cashMovementsTitle);
 
-            AddLabel(movementCard, "movementTypeLabel", "Type", 24, 84);
+            AddLabel(movementCard, "movementTypeLabel", Localization.T("Type"), 24, 84);
             movementTypeInput = new ComboBox();
             movementTypeInput.DropDownStyle = ComboBoxStyle.DropDownList;
-            movementTypeInput.Items.AddRange(new object[] { "Withdrawal", "Deposit" });
-            movementTypeInput.SelectedIndex = 0;
+            FillMovementTypeInput("Withdrawal");
             movementTypeInput.Left = 24;
             movementTypeInput.Top = 110;
             movementTypeInput.Width = 200;
             movementCard.Controls.Add(movementTypeInput);
 
-            AddLabel(movementCard, "movementAmountLabel", "Montant", 250, 84);
+            AddLabel(movementCard, "movementAmountLabel", Localization.T("Amount"), 250, 84);
             movementAmountInput = MoneyInput();
             movementAmountInput.Left = 250;
             movementAmountInput.Top = 110;
@@ -1181,7 +1191,9 @@ namespace OlyDrugstorePOS
             card.Padding = new Padding(18);
             tab.Controls.Add(card);
 
-            card.Controls.Add(CardTitle("Rapport magasin", 18, 14));
+            Label reportTitle = CardTitle(Localization.T("ReportTitle"), 18, 14);
+            reportTitle.Name = "reportTitle";
+            card.Controls.Add(reportTitle);
             reportTextBox = new TextBox();
             reportTextBox.Multiline = true;
             reportTextBox.ReadOnly = true;
@@ -1203,10 +1215,12 @@ namespace OlyDrugstorePOS
             card.Padding = new Padding(28);
             tab.Controls.Add(card);
 
-            Label title = CardTitle("Systeme", 28, 24);
+            Label title = CardTitle(Localization.T("System"), 28, 24);
+            title.Name = "systemTitle";
             card.Controls.Add(title);
             Label body = new Label();
-            body.Text = "Oly Drugstore POS\n\n- Donnees locales hors ligne\n- Sauvegarde automatique a la cloture de caisse\n- Pret pour scanner code a barres USB\n- Ticket printer via imprimante Windows\n- Future sync backend pour boutique en ligne";
+            body.Name = "settingsBody";
+            body.Text = Localization.T("SettingsBody");
             body.Left = 28;
             body.Top = 76;
             body.Width = 720;
@@ -1394,6 +1408,20 @@ namespace OlyDrugstorePOS
             SetText("restockCostLabel", Localization.T("PurchasePrice"));
             SetText("restockSupplierLabel", Localization.T("Supplier"));
             SetText("movementReasonLabel", Localization.T("Reason"));
+            SetText("catalogScannerTitle", Localization.T("CatalogScanner"));
+            SetText("scannerLabel", Localization.T("ScannerBarcode"));
+            SetText("currentTicketTitle", Localization.T("CurrentTicket"));
+            SetText("storeStockTitle", Localization.T("StoreStock"));
+            SetText("productFormTitle", Localization.T("ProductForm"));
+            SetText("storeFieldLabel", Localization.T("Store"));
+            SetText("cashClosingTitle", Localization.T("CashClosing"));
+            SetText("cashMovementsTitle", Localization.T("CashMovements"));
+            SetText("movementTypeLabel", Localization.T("Type"));
+            SetText("movementAmountLabel", Localization.T("Amount"));
+            SetText("reportTitle", Localization.T("ReportTitle"));
+            SetText("systemTitle", Localization.T("System"));
+            SetText("settingsBody", Localization.T("SettingsBody"));
+            FillMovementTypeInput(GetSelectedMovementType());
             RefreshAll();
         }
 
@@ -2458,7 +2486,7 @@ namespace OlyDrugstorePOS
 
             if (store.GetOpenSession(user.Username) == null)
             {
-                MessageBox.Show("Open a cash session first");
+                MessageBox.Show(Localization.T("OpenCashSessionFirst"));
                 tabs.SelectedTab = tabs.TabPages["cashTab"];
                 return;
             }
@@ -2497,7 +2525,7 @@ namespace OlyDrugstorePOS
 
             if (sale == null)
             {
-                MessageBox.Show("No completed sale to print");
+                MessageBox.Show(Localization.T("NoCompletedSaleToPrint"));
                 return;
             }
 
@@ -2542,7 +2570,7 @@ namespace OlyDrugstorePOS
             if (rows.Count == 0)
             {
                 selectedHistorySale = null;
-                if (saleDetailsTextBox != null) saleDetailsTextBox.Text = "No sales yet.";
+                if (saleDetailsTextBox != null) saleDetailsTextBox.Text = Localization.T("NoSalesYetMessage");
                 return;
             }
 
@@ -2739,8 +2767,15 @@ namespace OlyDrugstorePOS
         private string BuildCategoryPerformanceText(List<StockStrategyRow> rows)
         {
             StringBuilder builder = new StringBuilder();
+            builder.AppendLine(Localization.T("ABCGuideTitle"));
+            builder.AppendLine("--------------------------------");
+            builder.AppendLine(Localization.T("ABCGuideA"));
+            builder.AppendLine(Localization.T("ABCGuideB"));
+            builder.AppendLine(Localization.T("ABCGuideC"));
+            builder.AppendLine(Localization.T("ABCTableHint"));
+            builder.AppendLine();
             builder.AppendLine(Localization.T("CategoryPerformance").ToUpperInvariant());
-            builder.AppendLine("Store: " + activeStoreId);
+            builder.AppendLine(Localization.T("Store") + ": " + activeStoreId);
             builder.AppendLine();
 
             foreach (IGrouping<string, StockStrategyRow> category in rows.GroupBy(r => r.Category).OrderBy(g => g.Key))
@@ -2750,16 +2785,20 @@ namespace OlyDrugstorePOS
                 int aCount = category.Count(r => r.ABC == "A");
                 int bCount = category.Count(r => r.ABC == "B");
                 int cCount = category.Count(r => r.ABC == "C");
+                int reorder = category.Sum(r => r.ReorderQty);
 
                 builder.AppendLine(category.Key);
                 builder.AppendLine("--------------------------------");
                 builder.AppendLine(Localization.T("MostSold") + ": " + (mostSold == null ? "-" : mostSold.Product + " (" + mostSold.SoldQty + ")"));
                 builder.AppendLine(Localization.T("LessSold") + ": " + (lessSold == null ? "-" : lessSold.Product + " (" + lessSold.SoldQty + ")"));
                 builder.AppendLine("ABC: A=" + aCount + " | B=" + bCount + " | C=" + cCount);
+                builder.AppendLine(Localization.T("ActionNow") + ": " +
+                    (reorder > 0 ? Localization.T("OrderNow") + " " + reorder : Localization.T("NoOrderNeeded")));
                 builder.AppendLine();
             }
 
-            builder.AppendLine("ABC strategy");
+            builder.AppendLine(Localization.T("CategoryAdvice"));
+            builder.AppendLine("--------------------------------");
             builder.AppendLine("A: " + Localization.T("AStockRule"));
             builder.AppendLine("B: " + Localization.T("BStockRule"));
             builder.AppendLine("C: " + Localization.T("CStockRule"));
@@ -3260,14 +3299,37 @@ namespace OlyDrugstorePOS
             CashSession session = store.GetOpenSession(user.Username);
             if (session == null)
             {
-                MessageBox.Show("Open a cash session first");
+                MessageBox.Show(Localization.T("OpenCashSessionFirst"));
                 return;
             }
 
-            store.AddMovement(session, movementTypeInput.SelectedItem.ToString(), movementAmountInput.Value, movementReasonInput.Text, user.Username);
+            store.AddMovement(session, GetSelectedMovementType(), movementAmountInput.Value, movementReasonInput.Text, user.Username);
             movementAmountInput.Value = 0;
             movementReasonInput.Text = "";
             RefreshAll();
+        }
+
+        private void FillMovementTypeInput(string selectedValue)
+        {
+            if (movementTypeInput == null) return;
+            movementTypeInput.Items.Clear();
+            movementTypeInput.Items.Add(new ComboOption("Withdrawal", Localization.T("Withdrawal")));
+            movementTypeInput.Items.Add(new ComboOption("Deposit", Localization.T("Deposit")));
+            movementTypeInput.SelectedIndex = selectedValue == "Deposit" ? 1 : 0;
+        }
+
+        private string GetSelectedMovementType()
+        {
+            if (movementTypeInput == null) return "Withdrawal";
+            ComboOption option = movementTypeInput.SelectedItem as ComboOption;
+            return option == null ? "Withdrawal" : option.Value;
+        }
+
+        private string LocalizeMovementType(string value)
+        {
+            if (value == "Deposit") return Localization.T("Deposit");
+            if (value == "Withdrawal") return Localization.T("Withdrawal");
+            return value;
         }
 
         private void CloseShift()
@@ -3275,7 +3337,7 @@ namespace OlyDrugstorePOS
             CashSession session = store.GetOpenSession(user.Username);
             if (session == null)
             {
-                MessageBox.Show("No open session");
+                MessageBox.Show(Localization.T("NoOpenSession"));
                 return;
             }
 
@@ -3287,12 +3349,12 @@ namespace OlyDrugstorePOS
             decimal difference = counted - expected;
             decimal bankDeposit = Math.Max(0, counted - 200m);
             string message =
-                "Expected cash: " + Money(expected) + "\n" +
-                "Counted cash: " + Money(counted) + "\n" +
-                "Difference: " + Money(difference) + "\n" +
-                "Leave in register: " + Money(200m) + "\n" +
-                "Bank deposit: " + Money(bankDeposit) + "\n\n" +
-                "Close this shift?";
+                Localization.T("ExpectedCash") + ": " + Money(expected) + "\n" +
+                Localization.T("CountedCash") + ": " + Money(counted) + "\n" +
+                Localization.T("Difference") + ": " + Money(difference) + "\n" +
+                Localization.T("LeaveInRegister") + ": " + Money(200m) + "\n" +
+                Localization.T("BankDeposit") + ": " + Money(bankDeposit) + "\n\n" +
+                Localization.T("CloseShiftQuestion");
             if (MessageBox.Show(message, Localization.T("CloseShift"), MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
             {
                 return;
@@ -3302,7 +3364,7 @@ namespace OlyDrugstorePOS
             string report = BuildShiftClosingReport(session);
             string reportPath = SaveShiftClosingReport(session, report);
             PrintShiftClosingReport(report);
-            MessageBox.Show(Localization.T("BackupDone") + "\nClosing report saved:\n" + reportPath);
+            MessageBox.Show(Localization.T("BackupDone") + "\n" + Localization.T("ClosingReportSaved") + ":\n" + reportPath);
             RefreshAll();
         }
 
@@ -3310,7 +3372,7 @@ namespace OlyDrugstorePOS
         {
             if (cashStatusLabel == null || cashKpiLabel == null)
             {
-                if (sessionSummaryLabel != null) sessionSummaryLabel.Text = user.Role == UserRole.Admin ? "Gestion produits" : "";
+                if (sessionSummaryLabel != null) sessionSummaryLabel.Text = user.Role == UserRole.Admin ? Localization.T("ProductManagement") : "";
                 return;
             }
 
@@ -3456,7 +3518,7 @@ namespace OlyDrugstorePOS
             RenameColumn(stockStrategyGrid, "SoldQty", Localization.T("SoldQtyShort"));
             RenameColumn(stockStrategyGrid, "Revenue", "Revenue");
             RenameColumn(stockStrategyGrid, "Share", "Share");
-            RenameColumn(stockStrategyGrid, "ABC", "ABC");
+            RenameColumn(stockStrategyGrid, "ABC", Localization.T("ABCClass"));
             RenameColumn(stockStrategyGrid, "CurrentStock", Localization.T("CurrentStockShort"));
             RenameColumn(stockStrategyGrid, "CurrentMinimum", "Min");
             RenameColumn(stockStrategyGrid, "SuggestedMinimum", Localization.T("SuggestedMinimumShort"));
@@ -3558,24 +3620,24 @@ namespace OlyDrugstorePOS
         private void RefreshReports()
         {
             StringBuilder builder = new StringBuilder();
-            builder.AppendLine("OLY DRUGSTORE POS REPORT");
-            builder.AppendLine("Store: " + activeStoreId);
-            builder.AppendLine("Generated: " + DateTime.Now.ToString("g"));
+            builder.AppendLine("OLY DRUGSTORE POS - " + Localization.T("ReportTitle"));
+            builder.AppendLine(Localization.T("Store") + ": " + activeStoreId);
+            builder.AppendLine(Localization.T("Generated") + ": " + DateTime.Now.ToString("g"));
             builder.AppendLine();
-            builder.AppendLine("Sales count: " + store.Database.Sales.Count);
-            builder.AppendLine("Total sales: " + store.Database.Sales.Sum(s => s.IsReturn ? -s.Total : s.Total).ToString("0.000") + " DT");
-            builder.AppendLine("Debt total: " + store.Database.Sales.Where(s => s.IsDebt).Sum(s => s.Total).ToString("0.000") + " DT");
+            builder.AppendLine(Localization.T("SalesCount") + ": " + store.Database.Sales.Count);
+            builder.AppendLine(Localization.T("TotalSales") + ": " + store.Database.Sales.Sum(s => s.IsReturn ? -s.Total : s.Total).ToString("0.000") + " DT");
+            builder.AppendLine(Localization.T("DebtTotal") + ": " + store.Database.Sales.Where(s => s.IsDebt).Sum(s => s.Total).ToString("0.000") + " DT");
             builder.AppendLine();
-            builder.AppendLine("LOW STOCK");
+            builder.AppendLine(Localization.T("LowStock").ToUpperInvariant());
             foreach (Product product in store.Database.Products.Where(p => p.StoreId == activeStoreId && p.Quantity <= p.MinimumQuantity))
             {
-                builder.AppendLine("- " + product.Name + " | Qty: " + product.Quantity);
+                builder.AppendLine("- " + product.Name + " | " + Localization.T("Quantity") + ": " + product.Quantity);
             }
             builder.AppendLine();
-            builder.AppendLine("EXPIRING SOON");
+            builder.AppendLine(Localization.T("ExpiringSoon").ToUpperInvariant());
             foreach (Product product in store.Database.Products.Where(p => p.StoreId == activeStoreId && p.ExpiryDate <= DateTime.Today.AddDays(30)))
             {
-                builder.AppendLine("- " + product.Name + " | Expiry: " + product.ExpiryDate.ToShortDateString());
+                builder.AppendLine("- " + product.Name + " | " + Localization.T("Expiry") + ": " + product.ExpiryDate.ToShortDateString());
             }
             if (reportTextBox != null) reportTextBox.Text = builder.ToString();
         }
@@ -3628,59 +3690,59 @@ namespace OlyDrugstorePOS
 
             StringBuilder builder = new StringBuilder();
             builder.AppendLine("OLY DRUGSTORE POS");
-            builder.AppendLine("SHIFT CLOSING REPORT");
+            builder.AppendLine(Localization.T("ShiftClosingReport"));
             builder.AppendLine("----------------------------------------");
-            builder.AppendLine("Report date: " + DateTime.Now.ToString("g"));
-            builder.AppendLine("Store: " + storeName + " (" + session.StoreId + ")");
-            builder.AppendLine("Cashier: " + session.CashierUsername);
-            builder.AppendLine("Session: #" + session.Id);
-            builder.AppendLine("Opened: " + session.OpenedAt.ToString("g"));
-            builder.AppendLine("Closed: " + session.ClosedAt.ToString("g"));
+            builder.AppendLine(Localization.T("ReportDate") + ": " + DateTime.Now.ToString("g"));
+            builder.AppendLine(Localization.T("Store") + ": " + storeName + " (" + session.StoreId + ")");
+            builder.AppendLine(Localization.T("Cashier") + ": " + session.CashierUsername);
+            builder.AppendLine(Localization.T("Session") + ": #" + session.Id);
+            builder.AppendLine(Localization.T("Opened") + ": " + session.OpenedAt.ToString("g"));
+            builder.AppendLine(Localization.T("Closed") + ": " + session.ClosedAt.ToString("g"));
             builder.AppendLine("----------------------------------------");
-            builder.AppendLine("Opening fund: " + Money(session.OpeningFund));
-            builder.AppendLine("Cash sales: " + Money(cashSales));
-            builder.AppendLine("Card/other sales: " + Money(cardAndOtherSales));
-            builder.AppendLine("Debt sales: " + Money(debtSales));
-            builder.AppendLine("Returns: " + Money(returns));
-            builder.AppendLine("Deposits: " + Money(deposits));
-            builder.AppendLine("Withdrawals: " + Money(withdrawals));
+            builder.AppendLine(Localization.T("OpeningFund") + ": " + Money(session.OpeningFund));
+            builder.AppendLine(Localization.T("CashSales") + ": " + Money(cashSales));
+            builder.AppendLine(Localization.T("OtherSales") + ": " + Money(cardAndOtherSales));
+            builder.AppendLine(Localization.T("DebtSales") + ": " + Money(debtSales));
+            builder.AppendLine(Localization.T("Returns") + ": " + Money(returns));
+            builder.AppendLine(Localization.T("Deposits") + ": " + Money(deposits));
+            builder.AppendLine(Localization.T("Withdrawals") + ": " + Money(withdrawals));
             builder.AppendLine("----------------------------------------");
-            builder.AppendLine("Expected cash: " + Money(session.ExpectedCash));
-            builder.AppendLine("Counted cash: " + Money(session.CountedCash));
-            builder.AppendLine("Difference: " + Money(session.Difference));
-            builder.AppendLine("Leave in register: " + Money(200m));
-            builder.AppendLine("Bank deposit: " + Money(session.BankDeposit));
+            builder.AppendLine(Localization.T("ExpectedCash") + ": " + Money(session.ExpectedCash));
+            builder.AppendLine(Localization.T("CountedCash") + ": " + Money(session.CountedCash));
+            builder.AppendLine(Localization.T("Difference") + ": " + Money(session.Difference));
+            builder.AppendLine(Localization.T("LeaveInRegister") + ": " + Money(200m));
+            builder.AppendLine(Localization.T("BankDeposit") + ": " + Money(session.BankDeposit));
             builder.AppendLine("----------------------------------------");
-            builder.AppendLine("Tickets: " + sales.Count);
+            builder.AppendLine(Localization.T("Ticket") + "s: " + sales.Count);
             foreach (Sale sale in sales)
             {
                 builder.AppendLine(
                     sale.TicketNumber + " | " +
                     sale.CreatedAt.ToString("HH:mm") + " | " +
                     sale.PaymentMethod + " | " +
-                    (sale.IsDebt ? "DEBT | " : "") +
-                    (sale.IsReturn ? "RETURN | " : "") +
+                    (sale.IsDebt ? Localization.T("Debt").ToUpperInvariant() + " | " : "") +
+                    (sale.IsReturn ? Localization.T("Return").ToUpperInvariant() + " | " : "") +
                     Money(sale.Total));
             }
 
             if (session.Movements.Count > 0)
             {
                 builder.AppendLine("----------------------------------------");
-                builder.AppendLine("Cash movements");
+                builder.AppendLine(Localization.T("CashMovements"));
                 foreach (CashMovement movement in session.Movements.OrderBy(m => m.CreatedAt))
                 {
                     builder.AppendLine(
                         movement.CreatedAt.ToString("HH:mm") + " | " +
-                        movement.Type + " | " +
+                        LocalizeMovementType(movement.Type) + " | " +
                         Money(movement.Amount) + " | " +
                         movement.Reason);
                 }
             }
 
             builder.AppendLine("----------------------------------------");
-            builder.AppendLine("Cashier signature:");
+            builder.AppendLine(Localization.T("CashierSignature") + ":");
             builder.AppendLine();
-            builder.AppendLine("Manager signature:");
+            builder.AppendLine(Localization.T("ManagerSignature") + ":");
             return builder.ToString();
         }
 
@@ -3721,7 +3783,7 @@ namespace OlyDrugstorePOS
             }
             catch
             {
-                MessageBox.Show(report, "Shift closing report");
+                MessageBox.Show(report, Localization.T("ShiftClosingReport"));
             }
         }
 
@@ -3742,9 +3804,9 @@ namespace OlyDrugstorePOS
         {
             StringBuilder builder = new StringBuilder();
             builder.AppendLine("OLY DRUGSTORE");
-            builder.AppendLine("Ticket: " + sale.TicketNumber);
-            builder.AppendLine("Date: " + sale.CreatedAt.ToString("g"));
-            builder.AppendLine("Cashier: " + sale.CashierUsername);
+            builder.AppendLine(Localization.T("Ticket") + ": " + sale.TicketNumber);
+            builder.AppendLine(Localization.T("Date") + ": " + sale.CreatedAt.ToString("g"));
+            builder.AppendLine(Localization.T("Cashier") + ": " + sale.CashierUsername);
             builder.AppendLine("--------------------------------");
             foreach (SaleItem item in sale.Items)
             {
@@ -3752,11 +3814,11 @@ namespace OlyDrugstorePOS
                 builder.AppendLine(item.Quantity + " x " + item.UnitPrice.ToString("0.000") + " = " + item.LineTotal.ToString("0.000"));
             }
             builder.AppendLine("--------------------------------");
-            builder.AppendLine("Discount: " + sale.Discount.ToString("0.000"));
-            builder.AppendLine("TOTAL: " + sale.Total.ToString("0.000") + " DT");
-            builder.AppendLine("Payment: " + sale.PaymentMethod);
-            if (sale.IsDebt) builder.AppendLine("Customer debt: " + sale.CustomerName);
-            builder.AppendLine("Thank you");
+            builder.AppendLine(Localization.T("Discount") + ": " + sale.Discount.ToString("0.000"));
+            builder.AppendLine(Localization.T("Total").ToUpperInvariant() + ": " + sale.Total.ToString("0.000") + " DT");
+            builder.AppendLine(Localization.T("Payment") + ": " + sale.PaymentMethod);
+            if (sale.IsDebt) builder.AppendLine(Localization.T("CustomerDebt") + ": " + sale.CustomerName);
+            builder.AppendLine(Localization.T("ThankYou"));
             return builder.ToString();
         }
 
@@ -3769,6 +3831,23 @@ namespace OlyDrugstorePOS
             public string Total { get; set; }
             public string Status { get; set; }
             public string Customer { get; set; }
+        }
+
+        private class ComboOption
+        {
+            public ComboOption(string value, string label)
+            {
+                Value = value;
+                Label = label;
+            }
+
+            public string Value { get; private set; }
+            public string Label { get; private set; }
+
+            public override string ToString()
+            {
+                return Label;
+            }
         }
 
         private class ProductSalesMetric
