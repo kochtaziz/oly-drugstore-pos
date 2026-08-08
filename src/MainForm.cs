@@ -149,6 +149,7 @@ namespace OlyDrugstorePOS
             {
                 BuildSalesTab();
                 BuildCashTab();
+                BuildCashierDebtsTab();
                 BuildSalesHistoryTab();
                 BuildReportsTab();
             }
@@ -964,6 +965,12 @@ namespace OlyDrugstorePOS
             BuildFilesAdminPage(adminTabs);
         }
 
+        private void BuildCashierDebtsTab()
+        {
+            TabPage tab = NewTab("debtsTab");
+            BuildDebtPageContent(tab);
+        }
+
         private TabPage InnerTab(TabControl owner, string title)
         {
             TabPage page = new TabPage(title);
@@ -976,6 +983,11 @@ namespace OlyDrugstorePOS
         private void BuildDebtAdminPage(TabControl owner)
         {
             TabPage page = InnerTab(owner, Localization.T("Debts"));
+            BuildDebtPageContent(page);
+        }
+
+        private void BuildDebtPageContent(Control page)
+        {
             Panel card = UiTheme.CardPanel();
             card.Dock = DockStyle.Fill;
             card.Padding = new Padding(18);
@@ -1434,6 +1446,7 @@ namespace OlyDrugstorePOS
             if (tabs.TabPages.ContainsKey("salesTab")) tabs.TabPages["salesTab"].Text = Localization.T("Sales");
             if (tabs.TabPages.ContainsKey("productsTab")) tabs.TabPages["productsTab"].Text = Localization.T("Products");
             if (tabs.TabPages.ContainsKey("cashTab")) tabs.TabPages["cashTab"].Text = Localization.T("Cash");
+            if (tabs.TabPages.ContainsKey("debtsTab")) tabs.TabPages["debtsTab"].Text = Localization.T("Debts");
             if (tabs.TabPages.ContainsKey("historyTab")) tabs.TabPages["historyTab"].Text = Localization.T("History");
             if (tabs.TabPages.ContainsKey("stockStrategyTab")) tabs.TabPages["stockStrategyTab"].Text = Localization.T("Stock");
             if (tabs.TabPages.ContainsKey("adminToolsTab")) tabs.TabPages["adminToolsTab"].Text = Localization.T("Admin");
@@ -1522,6 +1535,7 @@ namespace OlyDrugstorePOS
             RefreshUrgentNotification();
             RefreshSalesHistory();
             RefreshStockStrategy();
+            RefreshDebtGrid();
             RefreshAdminTools();
             RefreshReports();
         }
@@ -3137,7 +3151,6 @@ namespace OlyDrugstorePOS
                 return;
             }
 
-            RefreshDebtGrid();
             RefreshAlertGrid();
             RefreshStockMovementGrid();
             RefreshUsersGrid();
