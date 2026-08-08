@@ -2434,7 +2434,7 @@ namespace OlyDrugstorePOS
             Product product = FindActiveStoreProduct(query, false);
             if (product == null)
             {
-                MessageBox.Show("Product not found");
+                MessageBox.Show(Localization.T("ProductNotFound"));
                 return;
             }
 
@@ -2445,6 +2445,13 @@ namespace OlyDrugstorePOS
         {
             int quantityToAdd = addQuantityInput == null ? 1 : (int)addQuantityInput.Value;
             SaleItem existing = cart.FirstOrDefault(i => i.ProductId == product.Id);
+            int existingQuantity = existing == null ? 0 : existing.Quantity;
+            if (!CanSellQuantity(product, existingQuantity + quantityToAdd))
+            {
+                ShowStockLimit(product, existingQuantity + quantityToAdd);
+                return;
+            }
+
             if (existing != null) existing.Quantity += quantityToAdd;
             else
             {
@@ -2493,17 +2500,67 @@ namespace OlyDrugstorePOS
             SaleItem item = GetSelectedCartItem();
             if (item == null) return;
 
-            item.Quantity += change;
-            if (item.Quantity <= 0)
+            int nextQuantity = item.Quantity + change;
+            if (nextQuantity <= 0)
             {
                 cart.Remove(item);
                 selectedCartProductId = 0;
             }
             else
             {
+                Product product = store.Database.Products.FirstOrDefault(p => p.Id == item.ProductId && p.StoreId == activeStoreId);
+                if (product != null && !CanSellQuantity(product, nextQuantity))
+                {
+                    ShowStockLimit(product, nextQuantity);
+                    return;
+                }
+
+                item.Quantity = nextQuantity;
                 selectedCartProductId = item.ProductId;
             }
             RefreshCart();
+        }
+
+        private bool CanSellQuantity(Product product, int requestedQuantity)
+        {
+            if (product == null) return false;
+            if (returnCheckBox != null && returnCheckBox.Checked) return true;
+            return requestedQuantity <= product.Quantity;
+        }
+
+        private void ShowStockLimit(Product product, int requestedQuantity)
+        {
+            MessageBox.Show(
+                Localization.T("OutOfStock") + "\n" +
+                product.Name + "\n" +
+                Localization.T("AvailableStock") + ": " + product.Quantity + "\n" +
+                Localization.T("RequestedQuantity") + ": " + requestedQuantity);
+        }
+
+        private bool ValidateCartStock()
+        {
+            if (returnCheckBox != null && returnCheckBox.Checked)
+            {
+                return true;
+            }
+
+            foreach (SaleItem item in cart)
+            {
+                Product product = store.Database.Products.FirstOrDefault(p => p.Id == item.ProductId && p.StoreId == activeStoreId);
+                if (product == null)
+                {
+                    MessageBox.Show(Localization.T("ProductNotFound") + ": " + item.ProductName);
+                    return false;
+                }
+
+                if (!CanSellQuantity(product, item.Quantity))
+                {
+                    ShowStockLimit(product, item.Quantity);
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void RememberSelectedCartItem()
@@ -2604,7 +2661,14 @@ namespace OlyDrugstorePOS
         {
             if (cart.Count == 0)
             {
-                MessageBox.Show("Cart is empty");
+                MessageBox.Show(Localization.T("CartEmpty"));
+                return;
+            }
+
+            if (!ValidateCartStock())
+            {
+                RefreshProducts();
+                RefreshCart();
                 return;
             }
 
@@ -2625,7 +2689,17 @@ namespace OlyDrugstorePOS
                 TaxRate = i.TaxRate
             }).ToList();
 
-            lastCompletedSale = store.SaveSale(user, activeStoreId, items, paymentComboBox.SelectedItem.ToString(), saleDiscountInput.Value, returnCheckBox.Checked, debtCheckBox.Checked, customerTextBox.Text);
+            try
+            {
+                lastCompletedSale = store.SaveSale(user, activeStoreId, items, paymentComboBox.SelectedItem.ToString(), saleDiscountInput.Value, returnCheckBox.Checked, debtCheckBox.Checked, customerTextBox.Text);
+            }
+            catch (InvalidOperationException ex)
+            {
+                MessageBox.Show(Localization.T("OutOfStock") + "\n" + ex.Message);
+                RefreshProducts();
+                RefreshCart();
+                return;
+            }
 
             cart.Clear();
             saleDiscountInput.Value = 0;

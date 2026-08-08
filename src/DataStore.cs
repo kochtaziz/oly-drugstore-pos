@@ -232,6 +232,22 @@ namespace OlyDrugstorePOS
             sale.CustomerName = customerName;
             sale.Items = items;
 
+            if (!isReturn)
+            {
+                foreach (SaleItem item in items)
+                {
+                    Product product = Database.Products.FirstOrDefault(p => p.Id == item.ProductId && p.StoreId == storeId);
+                    if (product == null)
+                    {
+                        throw new InvalidOperationException("Product not found: " + item.ProductName);
+                    }
+                    if (item.Quantity > product.Quantity)
+                    {
+                        throw new InvalidOperationException("Not enough stock for " + product.Name);
+                    }
+                }
+            }
+
             foreach (SaleItem item in items)
             {
                 Product product = Database.Products.FirstOrDefault(p => p.Id == item.ProductId);

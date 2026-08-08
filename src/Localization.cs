@@ -115,6 +115,11 @@ namespace OlyDrugstorePOS
             Fr["ClosingReportSaved"] = "Rapport de cloture enregistre";
             Fr["NoCompletedSaleToPrint"] = "Aucune vente terminee a imprimer";
             Fr["NoSalesYetMessage"] = "Aucune vente pour le moment.";
+            Fr["ProductNotFound"] = "Produit introuvable";
+            Fr["CartEmpty"] = "Le ticket est vide";
+            Fr["OutOfStock"] = "Stock insuffisant";
+            Fr["AvailableStock"] = "Stock disponible";
+            Fr["RequestedQuantity"] = "Quantite demandee";
             Fr["Name"] = "Nom";
             Fr["Category"] = "Categorie";
             Fr["CategoryShort"] = "Cat";
@@ -284,6 +289,11 @@ namespace OlyDrugstorePOS
             En["ClosingReportSaved"] = "Closing report saved";
             En["NoCompletedSaleToPrint"] = "No completed sale to print";
             En["NoSalesYetMessage"] = "No sales yet.";
+            En["ProductNotFound"] = "Product not found";
+            En["CartEmpty"] = "Cart is empty";
+            En["OutOfStock"] = "Not enough stock";
+            En["AvailableStock"] = "Available stock";
+            En["RequestedQuantity"] = "Requested quantity";
             En["Name"] = "Name";
             En["Category"] = "Category";
             En["CategoryShort"] = "Cat";
