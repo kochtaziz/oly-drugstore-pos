@@ -97,7 +97,7 @@ namespace OlyDrugstorePOS
         {
             Save();
             Directory.CreateDirectory(backupDirectory);
-            string fileName = "oly-pos-backup-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".xml";
+            string fileName = "oly-pos-backup-" + DateTime.Now.ToString("yyyyMMdd-HHmmss-fff") + ".xml";
             string target = Path.Combine(backupDirectory, fileName);
             File.Copy(dataPath, target, true);
             return target;
