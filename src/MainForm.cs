@@ -2125,13 +2125,15 @@ namespace OlyDrugstorePOS
 
                 int halfWidth = (contentWidth - gap) / 2;
                 returnCheckBox.Left = pad;
-                returnCheckBox.Top = optionTop + 44;
+                returnCheckBox.Top = optionTop + 46;
                 returnCheckBox.Width = halfWidth;
+                returnCheckBox.Height = 46;
                 debtCheckBox.Left = pad + halfWidth + gap;
-                debtCheckBox.Top = optionTop + 44;
+                debtCheckBox.Top = returnCheckBox.Top;
                 debtCheckBox.Width = contentWidth - halfWidth - gap;
+                debtCheckBox.Height = 46;
 
-                int fieldsTop = optionTop + 118;
+                int fieldsTop = returnCheckBox.Bottom + 34;
                 int columnWidth = (contentWidth - gap) / 2;
                 MoveLabel("discountLabel", pad, fieldsTop - 26, columnWidth);
                 saleDiscountInput.Left = pad;
@@ -2168,34 +2170,44 @@ namespace OlyDrugstorePOS
             }
 
             int optionTopWide = inputTop;
-            int wideFieldsTop = optionTopWide + 58;
+            int optionHeight = 48;
             employeeDiscountCheckBox.Left = pad;
             employeeDiscountCheckBox.Top = optionTopWide;
-            employeeDiscountCheckBox.Width = Math.Min(170, contentWidth / 3);
-            returnCheckBox.Left = employeeDiscountCheckBox.Right + gap;
-            returnCheckBox.Top = optionTopWide;
-            returnCheckBox.Width = Math.Min(120, contentWidth / 4);
-            debtCheckBox.Left = returnCheckBox.Right + gap;
-            debtCheckBox.Top = optionTopWide;
-            debtCheckBox.Width = Math.Max(130, contentWidth - debtCheckBox.Left + pad);
+            employeeDiscountCheckBox.Width = contentWidth;
+            employeeDiscountCheckBox.Height = 38;
 
-            int wideColumnWidth = Math.Max(92, (contentWidth - (gap * 2)) / 3);
+            int optionButtonTop = employeeDiscountCheckBox.Bottom + 16;
+            int optionButtonWidth = (contentWidth - gap) / 2;
+            returnCheckBox.Left = pad;
+            returnCheckBox.Top = optionButtonTop;
+            returnCheckBox.Width = optionButtonWidth;
+            returnCheckBox.Height = optionHeight;
+            debtCheckBox.Left = pad + optionButtonWidth + gap;
+            debtCheckBox.Top = optionButtonTop;
+            debtCheckBox.Width = contentWidth - optionButtonWidth - gap;
+            debtCheckBox.Height = optionHeight;
+
+            int wideFieldsTop = returnCheckBox.Bottom + 34;
+            int wideColumnWidth = Math.Max(112, (contentWidth - (gap * 2)) / 3);
             MoveLabel("discountLabel", pad, wideFieldsTop - 26, wideColumnWidth);
             saleDiscountInput.Left = pad;
             saleDiscountInput.Top = wideFieldsTop;
             saleDiscountInput.Width = wideColumnWidth;
+            saleDiscountInput.Height = 38;
 
             MoveLabel("paymentLabel", pad + wideColumnWidth + gap, wideFieldsTop - 26, wideColumnWidth);
             paymentComboBox.Left = pad + wideColumnWidth + gap;
             paymentComboBox.Top = wideFieldsTop;
             paymentComboBox.Width = wideColumnWidth;
+            paymentComboBox.Height = 38;
 
             MoveLabel("customerLabel", pad + (wideColumnWidth + gap) * 2, wideFieldsTop - 26, wideColumnWidth);
             customerTextBox.Left = pad + (wideColumnWidth + gap) * 2;
             customerTextBox.Top = wideFieldsTop;
             customerTextBox.Width = contentWidth - (wideColumnWidth + gap) * 2;
+            customerTextBox.Height = 38;
 
-            int totalTop = wideFieldsTop + 58;
+            int totalTop = wideFieldsTop + 66;
             int checkoutTop = totalTop + 42;
             int printTop = checkoutTop + 56;
             totalLabel.Left = pad;
