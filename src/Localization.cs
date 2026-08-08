@@ -19,6 +19,7 @@ namespace OlyDrugstorePOS
             Fr["Products"] = "Produits";
             Fr["Sales"] = "Vente";
             Fr["Cash"] = "Caisse";
+            Fr["History"] = "Historique";
             Fr["Reports"] = "Rapports";
             Fr["Settings"] = "Parametres";
             Fr["Search"] = "Scanner ou rechercher";
@@ -29,6 +30,12 @@ namespace OlyDrugstorePOS
             Fr["ClearCart"] = "Vider ticket";
             Fr["Checkout"] = "Encaisser";
             Fr["PrintTicket"] = "Imprimer";
+            Fr["SalesHistory"] = "Historique ventes";
+            Fr["TicketDetails"] = "Details ticket";
+            Fr["Refresh"] = "Actualiser";
+            Fr["Reprint"] = "Reimprimer";
+            Fr["Status"] = "Statut";
+            Fr["Paid"] = "Paye";
             Fr["Name"] = "Nom";
             Fr["Category"] = "Categorie";
             Fr["Barcode"] = "Code a barres";
@@ -66,6 +73,7 @@ namespace OlyDrugstorePOS
             En["Products"] = "Products";
             En["Sales"] = "Sale";
             En["Cash"] = "Cash";
+            En["History"] = "History";
             En["Reports"] = "Reports";
             En["Settings"] = "Settings";
             En["Search"] = "Scan or search";
@@ -76,6 +84,12 @@ namespace OlyDrugstorePOS
             En["ClearCart"] = "Clear ticket";
             En["Checkout"] = "Checkout";
             En["PrintTicket"] = "Print";
+            En["SalesHistory"] = "Sales history";
+            En["TicketDetails"] = "Ticket details";
+            En["Refresh"] = "Refresh";
+            En["Reprint"] = "Reprint";
+            En["Status"] = "Status";
+            En["Paid"] = "Paid";
             En["Name"] = "Name";
             En["Category"] = "Category";
             En["Barcode"] = "Barcode";

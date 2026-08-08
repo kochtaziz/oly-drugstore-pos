@@ -74,6 +74,9 @@ namespace OlyDrugstorePOS
         private TextBox movementReasonInput;
         private NumericUpDown countedCashInput;
         private TextBox reportTextBox;
+        private DataGridView salesHistoryGrid;
+        private TextBox saleDetailsTextBox;
+        private Sale selectedHistorySale;
 
         public MainForm(DataStore store, User user)
         {
@@ -112,6 +115,7 @@ namespace OlyDrugstorePOS
             {
                 BuildSalesTab();
                 BuildCashTab();
+                BuildSalesHistoryTab();
                 BuildReportsTab();
             }
             BuildSettingsTab();
@@ -688,6 +692,71 @@ namespace OlyDrugstorePOS
             movementCard.Controls.Add(movementButton);
         }
 
+        private void BuildSalesHistoryTab()
+        {
+            TabPage tab = NewTab("historyTab");
+            TableLayoutPanel shell = PageGrid(2, 1);
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
+            tab.Controls.Add(shell);
+
+            Panel listCard = UiTheme.CardPanel();
+            listCard.Dock = DockStyle.Fill;
+            listCard.Padding = new Padding(18);
+            shell.Controls.Add(listCard, 0, 0);
+            listCard.Controls.Add(CardTitle(Localization.T("SalesHistory"), 18, 14));
+
+            Button refreshButton = UiTheme.SecondaryButton(Localization.T("Refresh"));
+            refreshButton.Name = "refreshHistoryButton";
+            refreshButton.Width = 150;
+            refreshButton.Height = 46;
+            refreshButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            refreshButton.Left = listCard.Width - refreshButton.Width - 18;
+            refreshButton.Top = 18;
+            refreshButton.Click += delegate { RefreshSalesHistory(); };
+            listCard.Controls.Add(refreshButton);
+
+            salesHistoryGrid = UiTheme.Grid();
+            salesHistoryGrid.Left = 18;
+            salesHistoryGrid.Top = 78;
+            salesHistoryGrid.Width = 660;
+            salesHistoryGrid.Height = 560;
+            salesHistoryGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            salesHistoryGrid.CellClick += delegate { LoadSelectedHistorySale(); };
+            salesHistoryGrid.SelectionChanged += delegate { LoadSelectedHistorySale(); };
+            listCard.Controls.Add(salesHistoryGrid);
+
+            Panel detailCard = UiTheme.CardPanel();
+            detailCard.Dock = DockStyle.Fill;
+            detailCard.Padding = new Padding(18);
+            shell.Controls.Add(detailCard, 1, 0);
+            detailCard.Controls.Add(CardTitle(Localization.T("TicketDetails"), 18, 14));
+
+            saleDetailsTextBox = new TextBox();
+            saleDetailsTextBox.Multiline = true;
+            saleDetailsTextBox.ReadOnly = true;
+            saleDetailsTextBox.ScrollBars = ScrollBars.Vertical;
+            saleDetailsTextBox.Font = new Font("Consolas", 11);
+            saleDetailsTextBox.BackColor = Color.White;
+            saleDetailsTextBox.ForeColor = UiTheme.Text;
+            saleDetailsTextBox.Left = 18;
+            saleDetailsTextBox.Top = 78;
+            saleDetailsTextBox.Width = 390;
+            saleDetailsTextBox.Height = 470;
+            saleDetailsTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            detailCard.Controls.Add(saleDetailsTextBox);
+
+            Button reprintButton = UiTheme.PrimaryButton(Localization.T("Reprint"));
+            reprintButton.Name = "reprintHistoryButton";
+            reprintButton.Left = 18;
+            reprintButton.Top = 565;
+            reprintButton.Width = 390;
+            reprintButton.Height = 54;
+            reprintButton.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            reprintButton.Click += delegate { ReprintSelectedHistorySale(); };
+            detailCard.Controls.Add(reprintButton);
+        }
+
         private void BuildReportsTab()
         {
             TabPage tab = NewTab("reportsTab");
@@ -853,6 +922,7 @@ namespace OlyDrugstorePOS
             if (tabs.TabPages.ContainsKey("salesTab")) tabs.TabPages["salesTab"].Text = Localization.T("Sales");
             if (tabs.TabPages.ContainsKey("productsTab")) tabs.TabPages["productsTab"].Text = Localization.T("Products");
             if (tabs.TabPages.ContainsKey("cashTab")) tabs.TabPages["cashTab"].Text = Localization.T("Cash");
+            if (tabs.TabPages.ContainsKey("historyTab")) tabs.TabPages["historyTab"].Text = Localization.T("History");
             if (tabs.TabPages.ContainsKey("reportsTab")) tabs.TabPages["reportsTab"].Text = Localization.T("Reports");
             if (tabs.TabPages.ContainsKey("settingsTab")) tabs.TabPages["settingsTab"].Text = Localization.T("Settings");
 
@@ -884,6 +954,8 @@ namespace OlyDrugstorePOS
             SetText("openShiftButton", Localization.T("OpenShift"));
             SetText("closeShiftButton", Localization.T("CloseShift"));
             SetText("addMovementButton", Localization.T("Add"));
+            SetText("refreshHistoryButton", Localization.T("Refresh"));
+            SetText("reprintHistoryButton", Localization.T("Reprint"));
             SetText("countedLabel", Localization.T("CountedCash"));
             SetText("movementReasonLabel", Localization.T("Reason"));
             RefreshAll();
@@ -900,6 +972,7 @@ namespace OlyDrugstorePOS
             RefreshProducts();
             RefreshCart();
             RefreshCash();
+            RefreshSalesHistory();
             RefreshReports();
         }
 
@@ -1162,6 +1235,7 @@ namespace OlyDrugstorePOS
         {
             LayoutSalesScreen();
             LayoutProductsScreen();
+            LayoutSalesHistoryScreen();
         }
 
         private void ScheduleResponsiveLayout()
@@ -1497,6 +1571,51 @@ namespace OlyDrugstorePOS
             }
         }
 
+        private void LayoutSalesHistoryScreen()
+        {
+            if (salesHistoryGrid == null || saleDetailsTextBox == null)
+            {
+                return;
+            }
+
+            Control listCard = salesHistoryGrid.Parent;
+            Control detailCard = saleDetailsTextBox.Parent;
+            if (listCard == null || detailCard == null)
+            {
+                return;
+            }
+
+            int pad = 18;
+            Control refreshButton = FindNamedControl(listCard, "refreshHistoryButton");
+            if (refreshButton != null)
+            {
+                refreshButton.Left = Math.Max(pad, listCard.ClientSize.Width - refreshButton.Width - pad);
+                refreshButton.Top = 18;
+            }
+
+            salesHistoryGrid.Left = pad;
+            salesHistoryGrid.Top = 78;
+            salesHistoryGrid.Width = Math.Max(260, listCard.ClientSize.Width - (pad * 2));
+            salesHistoryGrid.Height = Math.Max(220, listCard.ClientSize.Height - 96);
+            FitSalesHistoryGridColumns();
+
+            Control reprintButton = FindNamedControl(detailCard, "reprintHistoryButton");
+            int reprintHeight = 54;
+            int reprintTop = Math.Max(88, detailCard.ClientSize.Height - reprintHeight - pad);
+            saleDetailsTextBox.Left = pad;
+            saleDetailsTextBox.Top = 78;
+            saleDetailsTextBox.Width = Math.Max(220, detailCard.ClientSize.Width - (pad * 2));
+            saleDetailsTextBox.Height = Math.Max(180, reprintTop - saleDetailsTextBox.Top - 14);
+
+            if (reprintButton != null)
+            {
+                reprintButton.Left = pad;
+                reprintButton.Top = reprintTop;
+                reprintButton.Width = saleDetailsTextBox.Width;
+                reprintButton.Height = reprintHeight;
+            }
+        }
+
         private void LayoutField(Control parent, string labelName, Control input, int left, int top, int width)
         {
             MoveLabel(labelName, left, top, width);
@@ -1708,6 +1827,87 @@ namespace OlyDrugstorePOS
             }
 
             PrintReceipt(sale);
+        }
+
+        private void RefreshSalesHistory()
+        {
+            if (salesHistoryGrid == null)
+            {
+                return;
+            }
+
+            int selectedSaleId = selectedHistorySale == null ? 0 : selectedHistorySale.Id;
+            List<SaleHistoryRow> rows = store.Database.Sales
+                .Where(s => s.StoreId == activeStoreId)
+                .OrderByDescending(s => s.CreatedAt)
+                .Select(s => new SaleHistoryRow
+                {
+                    SaleId = s.Id,
+                    Ticket = s.TicketNumber,
+                    Date = s.CreatedAt.ToString("g"),
+                    Payment = s.PaymentMethod,
+                    Total = Money(s.Total),
+                    Status = SaleStatusText(s),
+                    Customer = s.CustomerName
+                })
+                .ToList();
+
+            SetRedraw(salesHistoryGrid, false);
+            try
+            {
+                salesHistoryGrid.DataSource = null;
+                salesHistoryGrid.DataSource = rows;
+                FormatSalesHistoryGrid();
+            }
+            finally
+            {
+                SetRedraw(salesHistoryGrid, true);
+            }
+
+            if (rows.Count == 0)
+            {
+                selectedHistorySale = null;
+                if (saleDetailsTextBox != null) saleDetailsTextBox.Text = "No sales yet.";
+                return;
+            }
+
+            int rowIndex = rows.FindIndex(r => r.SaleId == selectedSaleId);
+            if (rowIndex < 0) rowIndex = 0;
+            salesHistoryGrid.ClearSelection();
+            salesHistoryGrid.Rows[rowIndex].Selected = true;
+            salesHistoryGrid.CurrentCell = salesHistoryGrid.Rows[rowIndex].Cells["Ticket"];
+            LoadSelectedHistorySale();
+        }
+
+        private void LoadSelectedHistorySale()
+        {
+            if (salesHistoryGrid == null || salesHistoryGrid.CurrentRow == null)
+            {
+                return;
+            }
+
+            SaleHistoryRow row = salesHistoryGrid.CurrentRow.DataBoundItem as SaleHistoryRow;
+            if (row == null)
+            {
+                return;
+            }
+
+            selectedHistorySale = store.Database.Sales.FirstOrDefault(s => s.Id == row.SaleId);
+            if (saleDetailsTextBox != null)
+            {
+                saleDetailsTextBox.Text = selectedHistorySale == null ? "" : BuildReceipt(selectedHistorySale);
+            }
+        }
+
+        private void ReprintSelectedHistorySale()
+        {
+            if (selectedHistorySale == null)
+            {
+                MessageBox.Show("Select a ticket first");
+                return;
+            }
+
+            PrintReceipt(selectedHistorySale);
         }
 
         private void LoadSelectedProduct()
@@ -1933,6 +2133,41 @@ namespace OlyDrugstorePOS
             FitCartGridColumns();
         }
 
+        private void FormatSalesHistoryGrid()
+        {
+            if (salesHistoryGrid == null || salesHistoryGrid.Columns.Count == 0)
+            {
+                return;
+            }
+
+            HideColumn(salesHistoryGrid, "SaleId");
+            RenameColumn(salesHistoryGrid, "Ticket", "Ticket");
+            RenameColumn(salesHistoryGrid, "Date", "Date");
+            RenameColumn(salesHistoryGrid, "Payment", Localization.T("Payment"));
+            RenameColumn(salesHistoryGrid, "Total", Localization.T("Total"));
+            RenameColumn(salesHistoryGrid, "Status", Localization.T("Status"));
+            RenameColumn(salesHistoryGrid, "Customer", Localization.T("Customer"));
+            AlignColumn(salesHistoryGrid, "Total", DataGridViewContentAlignment.MiddleRight);
+            AlignColumn(salesHistoryGrid, "Status", DataGridViewContentAlignment.MiddleCenter);
+            FitSalesHistoryGridColumns();
+        }
+
+        private void FitSalesHistoryGridColumns()
+        {
+            if (salesHistoryGrid == null || salesHistoryGrid.Columns.Count == 0)
+            {
+                return;
+            }
+
+            int visibleWidth = Math.Max(520, salesHistoryGrid.ClientSize.Width - 24);
+            SetColumnWidth(salesHistoryGrid, "Ticket", Math.Max(108, visibleWidth * 22 / 100));
+            SetColumnWidth(salesHistoryGrid, "Date", Math.Max(126, visibleWidth * 25 / 100));
+            SetColumnWidth(salesHistoryGrid, "Payment", Math.Max(82, visibleWidth * 16 / 100));
+            SetColumnWidth(salesHistoryGrid, "Total", Math.Max(82, visibleWidth * 16 / 100));
+            SetColumnWidth(salesHistoryGrid, "Status", Math.Max(78, visibleWidth * 14 / 100));
+            SetColumnWidth(salesHistoryGrid, "Customer", Math.Max(84, visibleWidth * 14 / 100));
+        }
+
         private void FitCartGridColumns()
         {
             if (cartGrid == null || cartGrid.Columns.Count == 0)
@@ -2155,6 +2390,14 @@ namespace OlyDrugstorePOS
             return amount.ToString("0.000") + " DT";
         }
 
+        private string SaleStatusText(Sale sale)
+        {
+            if (sale.IsDebt && sale.IsReturn) return Localization.T("Debt") + " / " + Localization.T("Return");
+            if (sale.IsDebt) return Localization.T("Debt");
+            if (sale.IsReturn) return Localization.T("Return");
+            return Localization.T("Paid");
+        }
+
         private string BuildReceipt(Sale sale)
         {
             StringBuilder builder = new StringBuilder();
@@ -2175,6 +2418,17 @@ namespace OlyDrugstorePOS
             if (sale.IsDebt) builder.AppendLine("Customer debt: " + sale.CustomerName);
             builder.AppendLine("Thank you");
             return builder.ToString();
+        }
+
+        private class SaleHistoryRow
+        {
+            public int SaleId { get; set; }
+            public string Ticket { get; set; }
+            public string Date { get; set; }
+            public string Payment { get; set; }
+            public string Total { get; set; }
+            public string Status { get; set; }
+            public string Customer { get; set; }
         }
     }
 }
