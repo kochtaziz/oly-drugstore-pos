@@ -51,6 +51,10 @@ namespace OlyDrugstorePOS
         private bool suppressSearchAutoAdd;
         private bool refreshingCategories;
         private bool scannerSubmitInProgress;
+        private bool productDragScrolling;
+        private bool productDragMoved;
+        private int productDragStartY;
+        private int productDragStartTop;
         private string lastCategoryRenderKey = "";
         private string lastProductRenderKey = "";
         private Timer responsiveLayoutTimer;
@@ -400,6 +404,9 @@ namespace OlyDrugstorePOS
                 ScrollProductsTo(-productButtonsPanel.Top - Math.Sign(e.Delta) * 96);
                 SyncProductScrollBarFromPanel();
             };
+            productViewportPanel.MouseDown += ProductDragMouseDown;
+            productViewportPanel.MouseMove += ProductDragMouseMove;
+            productViewportPanel.MouseUp += ProductDragMouseUp;
             productCard.Controls.Add(productViewportPanel);
 
             productButtonsPanel = new SmoothFlowLayoutPanel();
@@ -411,6 +418,9 @@ namespace OlyDrugstorePOS
             productButtonsPanel.WrapContents = true;
             productButtonsPanel.BackColor = UiTheme.CardAlt;
             productButtonsPanel.Padding = new Padding(2);
+            productButtonsPanel.MouseDown += ProductDragMouseDown;
+            productButtonsPanel.MouseMove += ProductDragMouseMove;
+            productButtonsPanel.MouseUp += ProductDragMouseUp;
             productViewportPanel.Controls.Add(productButtonsPanel);
 
             productScrollBar = new VScrollBar();
@@ -1562,8 +1572,17 @@ namespace OlyDrugstorePOS
                         product.SalePrice.ToString("0.000") + " DT\n" +
                         "Stock: " + product.Quantity;
                     button.Tag = product;
+                    button.MouseDown += ProductDragMouseDown;
+                    button.MouseMove += ProductDragMouseMove;
+                    button.MouseUp += ProductDragMouseUp;
                     button.Click += delegate(object sender, EventArgs e)
                     {
+                        if (productDragMoved)
+                        {
+                            productDragMoved = false;
+                            return;
+                        }
+
                         Button source = sender as Button;
                         Product selected = source == null ? null : source.Tag as Product;
                         if (selected != null)
@@ -1641,6 +1660,53 @@ namespace OlyDrugstorePOS
             int scrollableHeight = Math.Max(0, productButtonsPanel.Height - productViewportPanel.Height);
             int target = Math.Min(scrollableHeight, Math.Max(0, value));
             productButtonsPanel.Top = -target;
+        }
+
+        private void ProductDragMouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Left || productButtonsPanel == null)
+            {
+                return;
+            }
+
+            productDragScrolling = true;
+            productDragMoved = false;
+            productDragStartY = Cursor.Position.Y;
+            productDragStartTop = productButtonsPanel.Top;
+            Control source = sender as Control;
+            if (source != null)
+            {
+                source.Capture = true;
+            }
+        }
+
+        private void ProductDragMouseMove(object sender, MouseEventArgs e)
+        {
+            if (!productDragScrolling || productButtonsPanel == null || productViewportPanel == null)
+            {
+                return;
+            }
+
+            int delta = Cursor.Position.Y - productDragStartY;
+            if (Math.Abs(delta) > 6)
+            {
+                productDragMoved = true;
+            }
+
+            int scrollableHeight = Math.Max(0, productButtonsPanel.Height - productViewportPanel.Height);
+            int targetTop = Math.Min(0, Math.Max(-scrollableHeight, productDragStartTop + delta));
+            productButtonsPanel.Top = targetTop;
+            SyncProductScrollBarFromPanel();
+        }
+
+        private void ProductDragMouseUp(object sender, MouseEventArgs e)
+        {
+            productDragScrolling = false;
+            Control source = sender as Control;
+            if (source != null)
+            {
+                source.Capture = false;
+            }
         }
 
         private void SyncProductScrollBarFromPanel()
@@ -1914,7 +1980,12 @@ namespace OlyDrugstorePOS
                 control.Width = tileWidth;
             }
 
-            productButtonsPanel.Height = Math.Max(productViewportPanel.Height, productButtonsPanel.PreferredSize.Height + 12);
+            int columns = Math.Max(1, (productViewportPanel.ClientSize.Width - 8) / Math.Max(1, tileWidth + 14));
+            int rows = productButtonsPanel.Controls.Count == 0
+                ? 1
+                : (int)Math.Ceiling(productButtonsPanel.Controls.Count / (decimal)columns);
+            int tileHeightWithMargin = 142;
+            productButtonsPanel.Height = Math.Max(productViewportPanel.Height, (rows * tileHeightWithMargin) + 12);
             UpdateProductScrollBar();
         }
 
