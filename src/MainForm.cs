@@ -1323,7 +1323,7 @@ namespace OlyDrugstorePOS
         private Label CardTitle(string text, int left, int top)
         {
             Label label = new Label();
-            label.Text = "  " + text;
+            label.Text = text;
             label.Left = left;
             label.Top = top;
             label.Width = 360;
@@ -1331,11 +1331,13 @@ namespace OlyDrugstorePOS
             label.Font = UiTheme.FontLarge;
             label.ForeColor = UiTheme.Text;
             label.BackColor = Color.Transparent;
+            label.Padding = new Padding(14, 0, 0, 0);
+            label.TextAlign = ContentAlignment.MiddleLeft;
             label.Paint += delegate(object sender, PaintEventArgs e)
             {
                 using (SolidBrush brush = new SolidBrush(UiTheme.Accent))
                 {
-                    e.Graphics.FillRectangle(brush, 0, 7, 4, 18);
+                    e.Graphics.FillRectangle(brush, 0, 6, 5, 20);
                 }
             };
             return label;
@@ -1974,29 +1976,48 @@ namespace OlyDrugstorePOS
             int pad = 18;
             int productWidth = productCard.ClientSize.Width;
             int productHeight = productCard.ClientSize.Height;
-            int fieldTop = 84;
-            int gap = 8;
+            int labelTop = 56;
+            int fieldTop = 88;
+            int gap = 10;
             Control quantityDownButton = FindNamedControl(productCard, "quantityDownButton");
             Control quantityUpButton = FindNamedControl(productCard, "quantityUpButton");
             Control addButton = FindNamedControl(productCard, "addButton");
             if (quantityDownButton != null && quantityUpButton != null && addButton != null && searchTextBox != null)
             {
-                addButton.Width = productWidth < 560 ? 104 : 130;
+                Control productTitle = FindNamedControl(productCard, "catalogScannerTitle");
+                if (productTitle != null)
+                {
+                    productTitle.Left = pad;
+                    productTitle.Top = 16;
+                    productTitle.Width = Math.Max(220, productWidth - (pad * 2));
+                }
+
+                int touchButtonWidth = productWidth < 560 ? 104 : 132;
+                addButton.Width = touchButtonWidth;
                 addButton.Left = Math.Max(pad, productWidth - pad - addButton.Width);
                 addButton.Top = fieldTop;
+                addButton.Height = 58;
+                quantityDownButton.Width = 56;
+                quantityDownButton.Height = 58;
+                quantityUpButton.Width = 56;
+                quantityUpButton.Height = 58;
                 quantityUpButton.Left = addButton.Left - gap - quantityUpButton.Width;
                 quantityUpButton.Top = fieldTop;
                 quantityDownButton.Left = quantityUpButton.Left - gap - quantityDownButton.Width;
                 quantityDownButton.Top = fieldTop;
+                addQuantityInput.Width = productWidth < 560 ? 78 : 86;
+                addQuantityInput.Height = 58;
                 addQuantityInput.Left = quantityDownButton.Left - gap - addQuantityInput.Width;
                 addQuantityInput.Top = fieldTop;
                 searchTextBox.Left = pad;
                 searchTextBox.Top = fieldTop;
-                searchTextBox.Width = Math.Max(160, addQuantityInput.Left - pad - gap);
+                searchTextBox.Height = 58;
+                searchTextBox.Width = Math.Max(170, addQuantityInput.Left - pad - 16);
                 Control scannerLabel = FindNamedControl(productCard, "scannerLabel");
                 if (scannerLabel != null)
                 {
                     scannerLabel.Left = pad;
+                    scannerLabel.Top = labelTop;
                     scannerLabel.Width = searchTextBox.Width;
                 }
 
@@ -2004,17 +2025,17 @@ namespace OlyDrugstorePOS
                 if (quantityLabel != null)
                 {
                     quantityLabel.Left = addQuantityInput.Left;
-                    quantityLabel.Top = 52;
-                    quantityLabel.Width = 140;
+                    quantityLabel.Top = labelTop;
+                    quantityLabel.Width = Math.Max(110, addButton.Right - addQuantityInput.Left);
                 }
             }
 
-            int mainTop = 158;
+            int mainTop = 166;
             int mainHeight = Math.Max(240, productHeight - mainTop - pad);
             int railGap = 8;
-            int categoryScrollWidth = 32;
+            int categoryScrollWidth = 34;
             int productScrollWidth = 44;
-            int categoryAreaWidth = Math.Min(172, Math.Max(146, productWidth / 4));
+            int categoryAreaWidth = Math.Min(206, Math.Max(170, productWidth / 4));
             int categoryViewportWidth = Math.Max(104, categoryAreaWidth - categoryScrollWidth - railGap);
             categoryViewportPanel.Left = pad;
             categoryViewportPanel.Top = mainTop;

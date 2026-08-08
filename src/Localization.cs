@@ -98,7 +98,7 @@ namespace OlyDrugstorePOS
             Fr["ThankYou"] = "Merci";
             Fr["CustomerDebt"] = "Dette client";
             Fr["CatalogScanner"] = "Catalogue / Scanner";
-            Fr["ScannerBarcode"] = "Scanner / code a barres";
+            Fr["ScannerBarcode"] = "Code-barres";
             Fr["CurrentTicket"] = "Ticket en cours";
             Fr["StoreStock"] = "Stock par magasin";
             Fr["ProductForm"] = "Fiche produit";
@@ -273,7 +273,7 @@ namespace OlyDrugstorePOS
             En["ThankYou"] = "Thank you";
             En["CustomerDebt"] = "Customer debt";
             En["CatalogScanner"] = "Catalog / Scanner";
-            En["ScannerBarcode"] = "Scanner / barcode";
+            En["ScannerBarcode"] = "Barcode";
             En["CurrentTicket"] = "Current ticket";
             En["StoreStock"] = "Store stock";
             En["ProductForm"] = "Product form";
