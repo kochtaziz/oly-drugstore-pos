@@ -119,7 +119,6 @@ namespace OlyDrugstorePOS
                 BuildSalesTab();
                 BuildCashTab();
                 BuildSalesHistoryTab();
-                BuildStockStrategyTab();
                 BuildReportsTab();
             }
             BuildSettingsTab();
