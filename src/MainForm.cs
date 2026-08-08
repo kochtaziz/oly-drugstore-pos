@@ -35,6 +35,7 @@ namespace OlyDrugstorePOS
         private DataGridView cartGrid;
         private Label totalLabel;
         private Label sessionSummaryLabel;
+        private Button alertNotificationButton;
         private NumericUpDown addQuantityInput;
         private NumericUpDown saleDiscountInput;
         private ComboBox paymentComboBox;
@@ -87,6 +88,7 @@ namespace OlyDrugstorePOS
         private Sale selectedHistorySale;
         private DataGridView stockStrategyGrid;
         private TextBox categoryStrategyTextBox;
+        private TabControl adminTabs;
         private DataGridView debtGrid;
         private DataGridView alertGrid;
         private DataGridView stockMovementGrid;
@@ -239,13 +241,55 @@ namespace OlyDrugstorePOS
             };
             top.Controls.Add(languageComboBox, 2, 0);
 
+            Panel statusPanel = new Panel();
+            statusPanel.Dock = DockStyle.Fill;
+            statusPanel.BackColor = UiTheme.Primary;
+            top.Controls.Add(statusPanel, 3, 0);
+
+            alertNotificationButton = UiTheme.SecondaryButton("");
+            alertNotificationButton.Name = "alertNotificationButton";
+            alertNotificationButton.Left = 0;
+            alertNotificationButton.Top = 0;
+            alertNotificationButton.Width = 255;
+            alertNotificationButton.Height = 34;
+            alertNotificationButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            ThemedButton themedAlertButton = alertNotificationButton as ThemedButton;
+            if (themedAlertButton != null)
+            {
+                themedAlertButton.NormalBackColor = Color.FromArgb(254, 243, 199);
+                themedAlertButton.HoverBackColor = Color.FromArgb(253, 230, 138);
+                themedAlertButton.PressedBackColor = Color.FromArgb(252, 211, 77);
+            }
+            alertNotificationButton.BackColor = Color.FromArgb(254, 243, 199);
+            alertNotificationButton.ForeColor = Color.FromArgb(146, 64, 14);
+            alertNotificationButton.FlatAppearance.BorderColor = Color.FromArgb(251, 191, 36);
+            alertNotificationButton.Font = UiTheme.FontBold;
+            alertNotificationButton.Visible = false;
+            alertNotificationButton.Click += delegate { ShowUrgentAlerts(); };
+            statusPanel.Controls.Add(alertNotificationButton);
+
+            statusPanel.Resize += delegate
+            {
+                int statusWidth = Math.Min(280, Math.Max(150, statusPanel.Width));
+                alertNotificationButton.Width = statusWidth;
+                alertNotificationButton.Left = Math.Max(0, statusPanel.Width - alertNotificationButton.Width);
+                if (sessionSummaryLabel != null)
+                {
+                    sessionSummaryLabel.Width = statusWidth;
+                    sessionSummaryLabel.Left = Math.Max(0, statusPanel.Width - sessionSummaryLabel.Width);
+                }
+            };
+
             sessionSummaryLabel = new Label();
             sessionSummaryLabel.ForeColor = Color.FromArgb(240, 253, 244);
             sessionSummaryLabel.Font = UiTheme.FontBold;
             sessionSummaryLabel.TextAlign = ContentAlignment.MiddleRight;
-            sessionSummaryLabel.Dock = DockStyle.Fill;
-            sessionSummaryLabel.Margin = new Padding(10, 18, 0, 16);
-            top.Controls.Add(sessionSummaryLabel, 3, 0);
+            sessionSummaryLabel.Left = 0;
+            sessionSummaryLabel.Top = 38;
+            sessionSummaryLabel.Width = 255;
+            sessionSummaryLabel.Height = 32;
+            sessionSummaryLabel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            statusPanel.Controls.Add(sessionSummaryLabel);
 
             return top;
         }
@@ -880,7 +924,7 @@ namespace OlyDrugstorePOS
         private void BuildAdminToolsTab()
         {
             TabPage tab = NewTab("adminToolsTab");
-            TabControl adminTabs = new TabControl();
+            adminTabs = new TabControl();
             adminTabs.Dock = DockStyle.Fill;
             adminTabs.Font = UiTheme.FontBold;
             adminTabs.Padding = new Point(10, 6);
@@ -938,6 +982,7 @@ namespace OlyDrugstorePOS
         private void BuildAlertsAdminPage(TabControl owner)
         {
             TabPage page = InnerTab(owner, Localization.T("Alerts"));
+            page.Name = "alertsAdminPage";
             Panel card = UiTheme.CardPanel();
             card.Dock = DockStyle.Fill;
             card.Padding = new Padding(18);
@@ -1436,10 +1481,89 @@ namespace OlyDrugstorePOS
             RefreshProducts();
             RefreshCart();
             RefreshCash();
+            RefreshUrgentNotification();
             RefreshSalesHistory();
             RefreshStockStrategy();
             RefreshAdminTools();
             RefreshReports();
+        }
+
+        private void RefreshUrgentNotification()
+        {
+            if (alertNotificationButton == null) return;
+
+            List<Product> lowStockProducts = store.Database.Products
+                .Where(p => p.StoreId == activeStoreId && p.Quantity <= p.MinimumQuantity)
+                .ToList();
+            List<Product> nextWeekExpiryProducts = store.Database.Products
+                .Where(p => p.StoreId == activeStoreId && p.ExpiryDate <= DateTime.Today.AddDays(7))
+                .ToList();
+
+            int urgentCount = lowStockProducts
+                .Select(p => p.Id)
+                .Union(nextWeekExpiryProducts.Select(p => p.Id))
+                .Count();
+
+            alertNotificationButton.Visible = urgentCount > 0;
+            if (urgentCount == 0)
+            {
+                alertNotificationButton.Text = "";
+                return;
+            }
+
+            int availableWidth = alertNotificationButton.Parent == null
+                ? alertNotificationButton.Width
+                : Math.Min(alertNotificationButton.Width, alertNotificationButton.Parent.Width);
+            if (availableWidth < 230)
+            {
+                alertNotificationButton.Text = Localization.T("Alerts") + ": " + urgentCount;
+            }
+            else
+            {
+                alertNotificationButton.Text =
+                    Localization.T("UrgentAlerts") + ": " + urgentCount +
+                    " | " + Localization.T("LowStockShort") + " " + lowStockProducts.Count +
+                    " | " + Localization.T("ExpireNextWeek") + " " + nextWeekExpiryProducts.Count;
+            }
+        }
+
+        private void ShowUrgentAlerts()
+        {
+            if (user.Role == UserRole.Admin && tabs.TabPages.ContainsKey("adminToolsTab"))
+            {
+                tabs.SelectedTab = tabs.TabPages["adminToolsTab"];
+                if (adminTabs != null && adminTabs.TabPages.ContainsKey("alertsAdminPage"))
+                {
+                    adminTabs.SelectedTab = adminTabs.TabPages["alertsAdminPage"];
+                }
+                return;
+            }
+
+            List<Product> urgentProducts = store.Database.Products
+                .Where(p => p.StoreId == activeStoreId && (p.Quantity <= p.MinimumQuantity || p.ExpiryDate <= DateTime.Today.AddDays(7)))
+                .OrderBy(p => p.Quantity <= p.MinimumQuantity ? 0 : 1)
+                .ThenBy(p => p.ExpiryDate)
+                .Take(12)
+                .ToList();
+
+            if (urgentProducts.Count == 0)
+            {
+                MessageBox.Show(Localization.T("NoUrgentAlerts"));
+                return;
+            }
+
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine(Localization.T("UrgentAlerts"));
+            builder.AppendLine("--------------------------------");
+            foreach (Product product in urgentProducts)
+            {
+                string reason = product.Quantity <= product.MinimumQuantity
+                    ? Localization.T("LowStock")
+                    : Localization.T("ExpireNextWeek");
+                builder.AppendLine(reason + " | " + product.Name);
+                builder.AppendLine(Localization.T("Quantity") + ": " + product.Quantity + " | " + Localization.T("Expiry") + ": " + product.ExpiryDate.ToShortDateString());
+            }
+            MessageBox.Show(builder.ToString(), Localization.T("UrgentAlerts"));
         }
 
         private void RefreshProducts()

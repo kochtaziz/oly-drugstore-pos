@@ -108,7 +108,7 @@ namespace OlyDrugstorePOS
             Fr["System"] = "Systeme";
             Fr["SettingsBody"] = "Oly Drugstore POS\n\n- Donnees locales hors ligne\n- Sauvegarde automatique a la cloture de caisse\n- Pret pour scanner code a barres USB\n- Ticket printer via imprimante Windows\n- Future sync backend pour boutique en ligne";
             Fr["LeaveInRegister"] = "A laisser en caisse";
-            Fr["ProductManagement"] = "Gestion produits";
+            Fr["ProductManagement"] = "Produits";
             Fr["OpenCashSessionFirst"] = "Ouvrez une session de caisse d'abord";
             Fr["NoOpenSession"] = "Aucune session ouverte";
             Fr["CloseShiftQuestion"] = "Fermer cette session ?";
@@ -148,6 +148,10 @@ namespace OlyDrugstorePOS
             Fr["MarkPaid"] = "Marquer paye";
             Fr["Unpaid"] = "Non paye";
             Fr["Alerts"] = "Alertes";
+            Fr["UrgentAlerts"] = "Alertes urgentes";
+            Fr["ExpireNextWeek"] = "Expire 7j";
+            Fr["LowStockShort"] = "Stock bas";
+            Fr["NoUrgentAlerts"] = "Aucune alerte urgente";
             Fr["StockLog"] = "Historique stock";
             Fr["Users"] = "Utilisateurs";
             Fr["UserForm"] = "Fiche utilisateur";
@@ -273,7 +277,7 @@ namespace OlyDrugstorePOS
             En["System"] = "System";
             En["SettingsBody"] = "Oly Drugstore POS\n\n- Local offline data\n- Automatic backup when closing a shift\n- Ready for USB barcode scanners\n- Ticket printer through Windows printers\n- Future backend sync for the online store";
             En["LeaveInRegister"] = "Leave in register";
-            En["ProductManagement"] = "Product management";
+            En["ProductManagement"] = "Products";
             En["OpenCashSessionFirst"] = "Open a cash session first";
             En["NoOpenSession"] = "No open session";
             En["CloseShiftQuestion"] = "Close this shift?";
@@ -313,6 +317,10 @@ namespace OlyDrugstorePOS
             En["MarkPaid"] = "Mark paid";
             En["Unpaid"] = "Unpaid";
             En["Alerts"] = "Alerts";
+            En["UrgentAlerts"] = "Urgent alerts";
+            En["ExpireNextWeek"] = "Expire 7d";
+            En["LowStockShort"] = "Low stock";
+            En["NoUrgentAlerts"] = "No urgent alerts";
             En["StockLog"] = "Stock history";
             En["Users"] = "Users";
             En["UserForm"] = "User form";
