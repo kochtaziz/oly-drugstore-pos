@@ -77,6 +77,8 @@ namespace OlyDrugstorePOS
         private DataGridView salesHistoryGrid;
         private TextBox saleDetailsTextBox;
         private Sale selectedHistorySale;
+        private DataGridView stockStrategyGrid;
+        private TextBox categoryStrategyTextBox;
 
         public MainForm(DataStore store, User user)
         {
@@ -110,12 +112,14 @@ namespace OlyDrugstorePOS
             if (user.Role == UserRole.Admin)
             {
                 BuildProductsTab();
+                BuildStockStrategyTab();
             }
             else
             {
                 BuildSalesTab();
                 BuildCashTab();
                 BuildSalesHistoryTab();
+                BuildStockStrategyTab();
                 BuildReportsTab();
             }
             BuildSettingsTab();
@@ -757,6 +761,62 @@ namespace OlyDrugstorePOS
             detailCard.Controls.Add(reprintButton);
         }
 
+        private void BuildStockStrategyTab()
+        {
+            TabPage tab = NewTab("stockStrategyTab");
+            TableLayoutPanel shell = PageGrid(2, 1);
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 68));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32));
+            tab.Controls.Add(shell);
+
+            Panel strategyCard = UiTheme.CardPanel();
+            strategyCard.Dock = DockStyle.Fill;
+            strategyCard.Padding = new Padding(18);
+            shell.Controls.Add(strategyCard, 0, 0);
+            strategyCard.Controls.Add(CardTitle(Localization.T("StockStrategy"), 18, 14));
+
+            if (user.Role == UserRole.Admin)
+            {
+                Button applyButton = UiTheme.PrimaryButton(Localization.T("ApplyABC"));
+                applyButton.Name = "applyAbcButton";
+                applyButton.Width = 230;
+                applyButton.Height = 48;
+                applyButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                applyButton.Left = strategyCard.Width - applyButton.Width - 18;
+                applyButton.Top = 18;
+                applyButton.Click += delegate { ApplyAbcStockStrategy(); };
+                strategyCard.Controls.Add(applyButton);
+            }
+
+            stockStrategyGrid = UiTheme.Grid();
+            stockStrategyGrid.Left = 18;
+            stockStrategyGrid.Top = 78;
+            stockStrategyGrid.Width = 700;
+            stockStrategyGrid.Height = 560;
+            stockStrategyGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            strategyCard.Controls.Add(stockStrategyGrid);
+
+            Panel categoryCard = UiTheme.CardPanel();
+            categoryCard.Dock = DockStyle.Fill;
+            categoryCard.Padding = new Padding(18);
+            shell.Controls.Add(categoryCard, 1, 0);
+            categoryCard.Controls.Add(CardTitle(Localization.T("CategoryPerformance"), 18, 14));
+
+            categoryStrategyTextBox = new TextBox();
+            categoryStrategyTextBox.Multiline = true;
+            categoryStrategyTextBox.ReadOnly = true;
+            categoryStrategyTextBox.ScrollBars = ScrollBars.Vertical;
+            categoryStrategyTextBox.Font = new Font("Consolas", 11);
+            categoryStrategyTextBox.BackColor = Color.White;
+            categoryStrategyTextBox.ForeColor = UiTheme.Text;
+            categoryStrategyTextBox.Left = 18;
+            categoryStrategyTextBox.Top = 78;
+            categoryStrategyTextBox.Width = 390;
+            categoryStrategyTextBox.Height = 560;
+            categoryStrategyTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            categoryCard.Controls.Add(categoryStrategyTextBox);
+        }
+
         private void BuildReportsTab()
         {
             TabPage tab = NewTab("reportsTab");
@@ -923,6 +983,7 @@ namespace OlyDrugstorePOS
             if (tabs.TabPages.ContainsKey("productsTab")) tabs.TabPages["productsTab"].Text = Localization.T("Products");
             if (tabs.TabPages.ContainsKey("cashTab")) tabs.TabPages["cashTab"].Text = Localization.T("Cash");
             if (tabs.TabPages.ContainsKey("historyTab")) tabs.TabPages["historyTab"].Text = Localization.T("History");
+            if (tabs.TabPages.ContainsKey("stockStrategyTab")) tabs.TabPages["stockStrategyTab"].Text = Localization.T("Stock");
             if (tabs.TabPages.ContainsKey("reportsTab")) tabs.TabPages["reportsTab"].Text = Localization.T("Reports");
             if (tabs.TabPages.ContainsKey("settingsTab")) tabs.TabPages["settingsTab"].Text = Localization.T("Settings");
 
@@ -956,6 +1017,7 @@ namespace OlyDrugstorePOS
             SetText("addMovementButton", Localization.T("Add"));
             SetText("refreshHistoryButton", Localization.T("Refresh"));
             SetText("reprintHistoryButton", Localization.T("Reprint"));
+            SetText("applyAbcButton", Localization.T("ApplyABC"));
             SetText("countedLabel", Localization.T("CountedCash"));
             SetText("movementReasonLabel", Localization.T("Reason"));
             RefreshAll();
@@ -973,6 +1035,7 @@ namespace OlyDrugstorePOS
             RefreshCart();
             RefreshCash();
             RefreshSalesHistory();
+            RefreshStockStrategy();
             RefreshReports();
         }
 
@@ -1236,6 +1299,7 @@ namespace OlyDrugstorePOS
             LayoutSalesScreen();
             LayoutProductsScreen();
             LayoutSalesHistoryScreen();
+            LayoutStockStrategyScreen();
         }
 
         private void ScheduleResponsiveLayout()
@@ -1616,6 +1680,40 @@ namespace OlyDrugstorePOS
             }
         }
 
+        private void LayoutStockStrategyScreen()
+        {
+            if (stockStrategyGrid == null || categoryStrategyTextBox == null)
+            {
+                return;
+            }
+
+            Control strategyCard = stockStrategyGrid.Parent;
+            Control categoryCard = categoryStrategyTextBox.Parent;
+            if (strategyCard == null || categoryCard == null)
+            {
+                return;
+            }
+
+            int pad = 18;
+            Control applyButton = FindNamedControl(strategyCard, "applyAbcButton");
+            if (applyButton != null)
+            {
+                applyButton.Left = Math.Max(pad, strategyCard.ClientSize.Width - applyButton.Width - pad);
+                applyButton.Top = 18;
+            }
+
+            stockStrategyGrid.Left = pad;
+            stockStrategyGrid.Top = 78;
+            stockStrategyGrid.Width = Math.Max(320, strategyCard.ClientSize.Width - (pad * 2));
+            stockStrategyGrid.Height = Math.Max(220, strategyCard.ClientSize.Height - 96);
+            FitStockStrategyGridColumns();
+
+            categoryStrategyTextBox.Left = pad;
+            categoryStrategyTextBox.Top = 78;
+            categoryStrategyTextBox.Width = Math.Max(220, categoryCard.ClientSize.Width - (pad * 2));
+            categoryStrategyTextBox.Height = Math.Max(220, categoryCard.ClientSize.Height - 96);
+        }
+
         private void LayoutField(Control parent, string labelName, Control input, int left, int top, int width)
         {
             MoveLabel(labelName, left, top, width);
@@ -1910,6 +2008,209 @@ namespace OlyDrugstorePOS
             PrintReceipt(selectedHistorySale);
         }
 
+        private void RefreshStockStrategy()
+        {
+            if (stockStrategyGrid == null)
+            {
+                return;
+            }
+
+            List<StockStrategyRow> rows = BuildStockStrategyRows();
+            SetRedraw(stockStrategyGrid, false);
+            try
+            {
+                stockStrategyGrid.DataSource = null;
+                stockStrategyGrid.DataSource = rows;
+                FormatStockStrategyGrid();
+            }
+            finally
+            {
+                SetRedraw(stockStrategyGrid, true);
+            }
+
+            if (categoryStrategyTextBox != null)
+            {
+                categoryStrategyTextBox.Text = BuildCategoryPerformanceText(rows);
+            }
+        }
+
+        private List<StockStrategyRow> BuildStockStrategyRows()
+        {
+            List<ProductSalesMetric> metrics = BuildProductSalesMetrics();
+            decimal totalRevenue = metrics.Sum(m => m.Revenue);
+            decimal cumulativeRevenue = 0;
+            int totalSoldQuantity = metrics.Sum(m => m.QuantitySold);
+            List<StockStrategyRow> rows = new List<StockStrategyRow>();
+
+            foreach (ProductSalesMetric metric in metrics)
+            {
+                cumulativeRevenue += metric.Revenue;
+                decimal cumulativePercent = totalRevenue <= 0 ? 100 : (cumulativeRevenue / totalRevenue) * 100;
+                string abcClass = AbcClass(cumulativePercent, metric.QuantitySold);
+                int suggestedMinimum = SuggestedMinimumStock(metric, abcClass);
+                int reorderQuantity = Math.Max(0, suggestedMinimum - metric.Product.Quantity);
+                string movement = totalSoldQuantity <= 0
+                    ? Localization.T("NoSales")
+                    : metric.QuantitySold == metrics.Max(m => m.QuantitySold)
+                        ? Localization.T("TopSeller")
+                        : metric.QuantitySold == 0
+                            ? Localization.T("NoSales")
+                            : Localization.T("Normal");
+
+                rows.Add(new StockStrategyRow
+                {
+                    ProductId = metric.Product.Id,
+                    Category = metric.Product.Category,
+                    Product = metric.Product.Name,
+                    SoldQty = metric.QuantitySold,
+                    Revenue = Money(metric.Revenue),
+                    Share = totalRevenue <= 0 ? "0%" : ((metric.Revenue / totalRevenue) * 100).ToString("0.0") + "%",
+                    ABC = abcClass,
+                    CurrentStock = metric.Product.Quantity,
+                    CurrentMinimum = metric.Product.MinimumQuantity,
+                    SuggestedMinimum = suggestedMinimum,
+                    ReorderQty = reorderQuantity,
+                    Movement = movement
+                });
+            }
+
+            return rows
+                .OrderBy(r => r.Category)
+                .ThenBy(r => r.ABC)
+                .ThenByDescending(r => r.SoldQty)
+                .ToList();
+        }
+
+        private List<ProductSalesMetric> BuildProductSalesMetrics()
+        {
+            Dictionary<int, ProductSalesMetric> metrics = store.Database.Products
+                .Where(p => p.StoreId == activeStoreId)
+                .ToDictionary(
+                    p => p.Id,
+                    p => new ProductSalesMetric
+                    {
+                        Product = p,
+                        QuantitySold = 0,
+                        Revenue = 0,
+                        FirstSaleAt = DateTime.Today,
+                        LastSaleAt = DateTime.Today
+                    });
+
+            foreach (Sale sale in store.Database.Sales.Where(s => s.StoreId == activeStoreId))
+            {
+                foreach (SaleItem item in sale.Items)
+                {
+                    ProductSalesMetric metric;
+                    if (!metrics.TryGetValue(item.ProductId, out metric))
+                    {
+                        continue;
+                    }
+
+                    int signedQuantity = sale.IsReturn ? -item.Quantity : item.Quantity;
+                    decimal signedRevenue = sale.IsReturn ? -item.LineTotal : item.LineTotal;
+                    metric.QuantitySold += signedQuantity;
+                    metric.Revenue += signedRevenue;
+                    if (!metric.HasSales || sale.CreatedAt < metric.FirstSaleAt) metric.FirstSaleAt = sale.CreatedAt;
+                    if (!metric.HasSales || sale.CreatedAt > metric.LastSaleAt) metric.LastSaleAt = sale.CreatedAt;
+                    metric.HasSales = true;
+                }
+            }
+
+            foreach (ProductSalesMetric metric in metrics.Values)
+            {
+                if (metric.QuantitySold < 0) metric.QuantitySold = 0;
+                if (metric.Revenue < 0) metric.Revenue = 0;
+            }
+
+            return metrics.Values
+                .OrderByDescending(m => m.Revenue)
+                .ThenByDescending(m => m.QuantitySold)
+                .ThenBy(m => m.Product.Name)
+                .ToList();
+        }
+
+        private string AbcClass(decimal cumulativePercent, int quantitySold)
+        {
+            if (quantitySold <= 0) return "C";
+            if (cumulativePercent <= 80) return "A";
+            if (cumulativePercent <= 95) return "B";
+            return "C";
+        }
+
+        private int SuggestedMinimumStock(ProductSalesMetric metric, string abcClass)
+        {
+            int horizonDays = abcClass == "A" ? 21 : abcClass == "B" ? 14 : 7;
+            int safetyFloor = abcClass == "A" ? 10 : abcClass == "B" ? 5 : 2;
+            int days = 30;
+            if (metric.HasSales)
+            {
+                days = Math.Max(7, (int)Math.Ceiling((metric.LastSaleAt.Date - metric.FirstSaleAt.Date).TotalDays) + 1);
+            }
+
+            decimal averageDailySales = days <= 0 ? 0 : metric.QuantitySold / (decimal)days;
+            int demandBasedMinimum = (int)Math.Ceiling(averageDailySales * horizonDays);
+            int suggested = Math.Max(safetyFloor, demandBasedMinimum);
+
+            if (metric.QuantitySold == 0)
+            {
+                suggested = Math.Max(1, Math.Min(metric.Product.MinimumQuantity, 3));
+            }
+
+            return Math.Min(9999, suggested);
+        }
+
+        private string BuildCategoryPerformanceText(List<StockStrategyRow> rows)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine(Localization.T("CategoryPerformance").ToUpperInvariant());
+            builder.AppendLine("Store: " + activeStoreId);
+            builder.AppendLine();
+
+            foreach (IGrouping<string, StockStrategyRow> category in rows.GroupBy(r => r.Category).OrderBy(g => g.Key))
+            {
+                StockStrategyRow mostSold = category.OrderByDescending(r => r.SoldQty).ThenBy(r => r.Product).FirstOrDefault();
+                StockStrategyRow lessSold = category.OrderBy(r => r.SoldQty).ThenBy(r => r.Product).FirstOrDefault();
+                int aCount = category.Count(r => r.ABC == "A");
+                int bCount = category.Count(r => r.ABC == "B");
+                int cCount = category.Count(r => r.ABC == "C");
+
+                builder.AppendLine(category.Key);
+                builder.AppendLine("--------------------------------");
+                builder.AppendLine(Localization.T("MostSold") + ": " + (mostSold == null ? "-" : mostSold.Product + " (" + mostSold.SoldQty + ")"));
+                builder.AppendLine(Localization.T("LessSold") + ": " + (lessSold == null ? "-" : lessSold.Product + " (" + lessSold.SoldQty + ")"));
+                builder.AppendLine("ABC: A=" + aCount + " | B=" + bCount + " | C=" + cCount);
+                builder.AppendLine();
+            }
+
+            builder.AppendLine("ABC strategy");
+            builder.AppendLine("A: " + Localization.T("AStockRule"));
+            builder.AppendLine("B: " + Localization.T("BStockRule"));
+            builder.AppendLine("C: " + Localization.T("CStockRule"));
+            return builder.ToString();
+        }
+
+        private void ApplyAbcStockStrategy()
+        {
+            if (user.Role != UserRole.Admin)
+            {
+                return;
+            }
+
+            List<StockStrategyRow> rows = BuildStockStrategyRows();
+            foreach (StockStrategyRow row in rows)
+            {
+                Product product = store.Database.Products.FirstOrDefault(p => p.Id == row.ProductId);
+                if (product != null)
+                {
+                    product.MinimumQuantity = row.SuggestedMinimum;
+                }
+            }
+
+            store.Save();
+            RefreshAll();
+            MessageBox.Show(Localization.T("ABCUpdated"));
+        }
+
         private void LoadSelectedProduct()
         {
             if (stockGrid.CurrentRow == null) return;
@@ -2152,6 +2453,40 @@ namespace OlyDrugstorePOS
             FitSalesHistoryGridColumns();
         }
 
+        private void FormatStockStrategyGrid()
+        {
+            if (stockStrategyGrid == null || stockStrategyGrid.Columns.Count == 0)
+            {
+                return;
+            }
+
+            HideColumn(stockStrategyGrid, "ProductId");
+            HideColumn(stockStrategyGrid, "Revenue");
+            HideColumn(stockStrategyGrid, "Share");
+            HideColumn(stockStrategyGrid, "Movement");
+            RenameColumn(stockStrategyGrid, "Category", Localization.T("CategoryShort"));
+            RenameColumn(stockStrategyGrid, "Product", Localization.T("Name"));
+            RenameColumn(stockStrategyGrid, "SoldQty", Localization.T("SoldQtyShort"));
+            RenameColumn(stockStrategyGrid, "Revenue", "Revenue");
+            RenameColumn(stockStrategyGrid, "Share", "Share");
+            RenameColumn(stockStrategyGrid, "ABC", "ABC");
+            RenameColumn(stockStrategyGrid, "CurrentStock", Localization.T("CurrentStockShort"));
+            RenameColumn(stockStrategyGrid, "CurrentMinimum", "Min");
+            RenameColumn(stockStrategyGrid, "SuggestedMinimum", Localization.T("SuggestedMinimumShort"));
+            RenameColumn(stockStrategyGrid, "ReorderQty", Localization.T("ReorderQtyShort"));
+            RenameColumn(stockStrategyGrid, "Movement", Localization.T("Movement"));
+
+            AlignColumn(stockStrategyGrid, "SoldQty", DataGridViewContentAlignment.MiddleCenter);
+            AlignColumn(stockStrategyGrid, "Revenue", DataGridViewContentAlignment.MiddleRight);
+            AlignColumn(stockStrategyGrid, "Share", DataGridViewContentAlignment.MiddleCenter);
+            AlignColumn(stockStrategyGrid, "ABC", DataGridViewContentAlignment.MiddleCenter);
+            AlignColumn(stockStrategyGrid, "CurrentStock", DataGridViewContentAlignment.MiddleCenter);
+            AlignColumn(stockStrategyGrid, "CurrentMinimum", DataGridViewContentAlignment.MiddleCenter);
+            AlignColumn(stockStrategyGrid, "SuggestedMinimum", DataGridViewContentAlignment.MiddleCenter);
+            AlignColumn(stockStrategyGrid, "ReorderQty", DataGridViewContentAlignment.MiddleCenter);
+            FitStockStrategyGridColumns();
+        }
+
         private void FitSalesHistoryGridColumns()
         {
             if (salesHistoryGrid == null || salesHistoryGrid.Columns.Count == 0)
@@ -2166,6 +2501,24 @@ namespace OlyDrugstorePOS
             SetColumnWidth(salesHistoryGrid, "Total", Math.Max(82, visibleWidth * 16 / 100));
             SetColumnWidth(salesHistoryGrid, "Status", Math.Max(78, visibleWidth * 14 / 100));
             SetColumnWidth(salesHistoryGrid, "Customer", Math.Max(84, visibleWidth * 14 / 100));
+        }
+
+        private void FitStockStrategyGridColumns()
+        {
+            if (stockStrategyGrid == null || stockStrategyGrid.Columns.Count == 0)
+            {
+                return;
+            }
+
+            int visibleWidth = Math.Max(460, stockStrategyGrid.ClientSize.Width - 24);
+            SetColumnWidth(stockStrategyGrid, "Category", Math.Max(70, visibleWidth * 13 / 100));
+            SetColumnWidth(stockStrategyGrid, "Product", Math.Max(132, visibleWidth * 30 / 100));
+            SetColumnWidth(stockStrategyGrid, "SoldQty", Math.Max(48, visibleWidth * 7 / 100));
+            SetColumnWidth(stockStrategyGrid, "ABC", Math.Max(42, visibleWidth * 6 / 100));
+            SetColumnWidth(stockStrategyGrid, "CurrentStock", Math.Max(48, visibleWidth * 8 / 100));
+            SetColumnWidth(stockStrategyGrid, "CurrentMinimum", Math.Max(44, visibleWidth * 7 / 100));
+            SetColumnWidth(stockStrategyGrid, "SuggestedMinimum", Math.Max(58, visibleWidth * 9 / 100));
+            SetColumnWidth(stockStrategyGrid, "ReorderQty", Math.Max(58, visibleWidth * 9 / 100));
         }
 
         private void FitCartGridColumns()
@@ -2429,6 +2782,32 @@ namespace OlyDrugstorePOS
             public string Total { get; set; }
             public string Status { get; set; }
             public string Customer { get; set; }
+        }
+
+        private class ProductSalesMetric
+        {
+            public Product Product { get; set; }
+            public int QuantitySold { get; set; }
+            public decimal Revenue { get; set; }
+            public bool HasSales { get; set; }
+            public DateTime FirstSaleAt { get; set; }
+            public DateTime LastSaleAt { get; set; }
+        }
+
+        private class StockStrategyRow
+        {
+            public int ProductId { get; set; }
+            public string Category { get; set; }
+            public string Product { get; set; }
+            public int SoldQty { get; set; }
+            public string Revenue { get; set; }
+            public string Share { get; set; }
+            public string ABC { get; set; }
+            public int CurrentStock { get; set; }
+            public int CurrentMinimum { get; set; }
+            public int SuggestedMinimum { get; set; }
+            public int ReorderQty { get; set; }
+            public string Movement { get; set; }
         }
     }
 }

@@ -24,10 +24,14 @@ The first version targets old store computers and peripherals:
 - Employee and normal discounts
 - Returns/refunds record
 - Customer debt record
+- Sales history with receipt preview and reprint
 - Cash register sessions
 - 200 DT fixed opening/remaining cash fund
 - Cash withdrawals and deposits
 - Shift closing report
+- Category performance report with most/least sold products
+- ABC stock strategy recommendations
+- Admin action to apply ABC minimum stock levels
 - Backup when closing shift
 - Bilingual FR/EN labels
 
