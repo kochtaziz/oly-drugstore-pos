@@ -47,6 +47,7 @@ namespace OlyDrugstorePOS
         private Button clearCartButton;
         private Button printReceiptButton;
         private Sale lastCompletedSale;
+        private int selectedCartProductId;
         private string activeCategory = "All";
         private bool suppressSearchAutoAdd;
         private bool refreshingCategories;
@@ -55,6 +56,7 @@ namespace OlyDrugstorePOS
         private bool productDragMoved;
         private int productDragStartY;
         private int productDragStartTop;
+        private int productDragLastScrollSyncY;
         private string lastCategoryRenderKey = "";
         private string lastProductRenderKey = "";
         private Timer responsiveLayoutTimer;
@@ -460,6 +462,8 @@ namespace OlyDrugstorePOS
             cartGrid.Width = 410;
             cartGrid.Height = 160;
             cartGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            cartGrid.CellClick += delegate { RememberSelectedCartItem(); };
+            cartGrid.SelectionChanged += delegate { RememberSelectedCartItem(); };
             checkoutCard.Controls.Add(cartGrid);
 
             Button removeButton = UiTheme.SecondaryButton(Localization.T("Remove"));
@@ -1673,6 +1677,7 @@ namespace OlyDrugstorePOS
             productDragMoved = false;
             productDragStartY = Cursor.Position.Y;
             productDragStartTop = productButtonsPanel.Top;
+            productDragLastScrollSyncY = productDragStartY;
             Control source = sender as Control;
             if (source != null)
             {
@@ -1696,12 +1701,17 @@ namespace OlyDrugstorePOS
             int scrollableHeight = Math.Max(0, productButtonsPanel.Height - productViewportPanel.Height);
             int targetTop = Math.Min(0, Math.Max(-scrollableHeight, productDragStartTop + delta));
             productButtonsPanel.Top = targetTop;
-            SyncProductScrollBarFromPanel();
+            if (Math.Abs(Cursor.Position.Y - productDragLastScrollSyncY) >= 24)
+            {
+                productDragLastScrollSyncY = Cursor.Position.Y;
+                SyncProductScrollBarFromPanel();
+            }
         }
 
         private void ProductDragMouseUp(object sender, MouseEventArgs e)
         {
             productDragScrolling = false;
+            SyncProductScrollBarFromPanel();
             Control source = sender as Control;
             if (source != null)
             {
@@ -2192,7 +2202,10 @@ namespace OlyDrugstorePOS
                 scannerAutoAddTimer.Stop();
             }
 
-            RefreshProducts();
+            if (query.Length == 0 || query.Length < 4)
+            {
+                RefreshProducts();
+            }
 
             if (query.Length >= 4 && scannerAutoAddTimer != null)
             {
@@ -2317,24 +2330,66 @@ namespace OlyDrugstorePOS
 
         private void RemoveSelectedCartItem()
         {
-            if (cartGrid.CurrentRow == null) return;
-            SaleItem item = cartGrid.CurrentRow.DataBoundItem as SaleItem;
+            SaleItem item = GetSelectedCartItem();
             if (item != null) cart.Remove(item);
+            selectedCartProductId = 0;
             RefreshCart();
         }
 
         private void ChangeSelectedQuantity(int change)
         {
-            if (cartGrid.CurrentRow == null) return;
-            SaleItem item = cartGrid.CurrentRow.DataBoundItem as SaleItem;
+            SaleItem item = GetSelectedCartItem();
             if (item == null) return;
 
             item.Quantity += change;
             if (item.Quantity <= 0)
             {
                 cart.Remove(item);
+                selectedCartProductId = 0;
+            }
+            else
+            {
+                selectedCartProductId = item.ProductId;
             }
             RefreshCart();
+        }
+
+        private void RememberSelectedCartItem()
+        {
+            if (cartGrid == null || cartGrid.CurrentRow == null)
+            {
+                return;
+            }
+
+            SaleItem item = cartGrid.CurrentRow.DataBoundItem as SaleItem;
+            if (item != null)
+            {
+                selectedCartProductId = item.ProductId;
+            }
+        }
+
+        private SaleItem GetSelectedCartItem()
+        {
+            if (selectedCartProductId != 0)
+            {
+                SaleItem remembered = cart.FirstOrDefault(i => i.ProductId == selectedCartProductId);
+                if (remembered != null)
+                {
+                    return remembered;
+                }
+            }
+
+            if (cartGrid == null || cartGrid.CurrentRow == null)
+            {
+                return null;
+            }
+
+            SaleItem item = cartGrid.CurrentRow.DataBoundItem as SaleItem;
+            if (item != null)
+            {
+                selectedCartProductId = item.ProductId;
+            }
+            return item;
         }
 
         private void ApplyEmployeeDiscount()
@@ -2357,6 +2412,7 @@ namespace OlyDrugstorePOS
                     cartGrid.DataSource = null;
                     cartGrid.DataSource = cart.ToList();
                     FormatCartGrid();
+                    RestoreCartSelection();
                 }
                 finally
                 {
@@ -2367,6 +2423,29 @@ namespace OlyDrugstorePOS
             decimal discount = saleDiscountInput != null ? saleDiscountInput.Value : 0;
             decimal total = Math.Max(0, cart.Sum(i => i.LineTotal) - discount);
             if (totalLabel != null) totalLabel.Text = Localization.T("Total") + ": " + total.ToString("0.000") + " DT";
+        }
+
+        private void RestoreCartSelection()
+        {
+            if (cartGrid == null || cartGrid.Rows.Count == 0 || selectedCartProductId == 0)
+            {
+                return;
+            }
+
+            for (int index = 0; index < cartGrid.Rows.Count; index++)
+            {
+                SaleItem item = cartGrid.Rows[index].DataBoundItem as SaleItem;
+                if (item != null && item.ProductId == selectedCartProductId)
+                {
+                    cartGrid.ClearSelection();
+                    cartGrid.Rows[index].Selected = true;
+                    if (cartGrid.Columns.Contains("ProductName"))
+                    {
+                        cartGrid.CurrentCell = cartGrid.Rows[index].Cells["ProductName"];
+                    }
+                    return;
+                }
+            }
         }
 
         private void Checkout()
