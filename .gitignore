@@ -3,6 +3,7 @@ obj/
 data/
 backups/
 screenshots/
+tmp/
 *.user
 *.suo
 *.log
