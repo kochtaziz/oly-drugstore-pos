@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using System.Xml.Serialization;
 
 namespace OlyDrugstorePOS
 {
     public class DataStore
     {
+        private const string PasswordHashPrefix = "sha256:";
         private readonly string dataDirectory;
         private readonly string dataPath;
         private readonly string backupDirectory;
@@ -36,6 +39,7 @@ namespace OlyDrugstorePOS
                 {
                     Database = (PosDatabase)serializer.Deserialize(stream);
                 }
+                EnsureDatabaseShape();
                 if (EnsureStartupCatalog())
                 {
                     Save();
@@ -44,9 +48,39 @@ namespace OlyDrugstorePOS
             else
             {
                 Database = CreateSeedDatabase();
+                EnsureDatabaseShape();
                 EnsureStartupCatalog();
                 Save();
             }
+        }
+
+        private void EnsureDatabaseShape()
+        {
+            if (Database.Users == null) Database.Users = new List<User>();
+            if (Database.Stores == null) Database.Stores = new List<Store>();
+            if (Database.Products == null) Database.Products = new List<Product>();
+            if (Database.Sales == null) Database.Sales = new List<Sale>();
+            if (Database.CashSessions == null) Database.CashSessions = new List<CashSession>();
+            if (Database.StockMovements == null) Database.StockMovements = new List<StockMovement>();
+            if (Database.SupplierPurchases == null) Database.SupplierPurchases = new List<SupplierPurchase>();
+            if (Database.NextProductId <= 0) Database.NextProductId = NextId(Database.Products.Select(p => p.Id));
+            if (Database.NextSaleId <= 0) Database.NextSaleId = NextId(Database.Sales.Select(s => s.Id));
+            if (Database.NextCashSessionId <= 0) Database.NextCashSessionId = NextId(Database.CashSessions.Select(s => s.Id));
+            if (Database.NextCashMovementId <= 0) Database.NextCashMovementId = NextId(Database.CashSessions.SelectMany(s => s.Movements ?? new List<CashMovement>()).Select(m => m.Id));
+            if (Database.NextStockMovementId <= 0) Database.NextStockMovementId = NextId(Database.StockMovements.Select(m => m.Id));
+            if (Database.NextSupplierPurchaseId <= 0) Database.NextSupplierPurchaseId = NextId(Database.SupplierPurchases.Select(p => p.Id));
+            foreach (User user in Database.Users)
+            {
+                if (!IsHashedPassword(user.Password))
+                {
+                    user.Password = HashPassword(user.Password);
+                }
+            }
+        }
+
+        private int NextId(IEnumerable<int> ids)
+        {
+            return ids.Any() ? ids.Max() + 1 : 1;
         }
 
         public void Save()
@@ -69,11 +103,53 @@ namespace OlyDrugstorePOS
             return target;
         }
 
+        public void RestoreBackup(string sourcePath)
+        {
+            if (string.IsNullOrEmpty(sourcePath) || !File.Exists(sourcePath))
+            {
+                throw new FileNotFoundException("Backup file not found", sourcePath);
+            }
+
+            Backup();
+            File.Copy(sourcePath, dataPath, true);
+            Load();
+        }
+
         public User Authenticate(string username, string password)
         {
             return Database.Users.FirstOrDefault(u =>
                 string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase) &&
-                u.Password == password);
+                VerifyPassword(password, u.Password));
+        }
+
+        private bool IsHashedPassword(string password)
+        {
+            return !string.IsNullOrEmpty(password) && password.StartsWith(PasswordHashPrefix, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string HashPassword(string password)
+        {
+            password = password ?? "";
+            using (SHA256 sha = SHA256.Create())
+            {
+                byte[] bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
+                StringBuilder builder = new StringBuilder();
+                foreach (byte item in bytes)
+                {
+                    builder.Append(item.ToString("x2"));
+                }
+                return PasswordHashPrefix + builder.ToString();
+            }
+        }
+
+        private bool VerifyPassword(string input, string stored)
+        {
+            if (!IsHashedPassword(stored))
+            {
+                return stored == input;
+            }
+
+            return string.Equals(HashPassword(input), stored, StringComparison.OrdinalIgnoreCase);
         }
 
         public Product FindProduct(string codeOrName)
@@ -161,6 +237,7 @@ namespace OlyDrugstorePOS
                 Product product = Database.Products.FirstOrDefault(p => p.Id == item.ProductId);
                 if (product != null)
                 {
+                    int oldQuantity = product.Quantity;
                     if (isReturn)
                     {
                         product.Quantity += item.Quantity;
@@ -169,6 +246,7 @@ namespace OlyDrugstorePOS
                     {
                         product.Quantity -= item.Quantity;
                     }
+                    RecordStockMovement(product, oldQuantity, product.Quantity, isReturn ? "Return" : "Sale", sale.TicketNumber, cashier.Username, false);
                 }
             }
 
@@ -179,12 +257,221 @@ namespace OlyDrugstorePOS
 
         public void SaveProduct(Product product)
         {
+            SaveProduct(product, "", "Product edit");
+        }
+
+        public void SaveProduct(Product product, string username, string reason)
+        {
+            SaveProduct(product, username, reason, product.Quantity);
+        }
+
+        public void SaveProduct(Product product, string username, string reason, int oldQuantity)
+        {
             if (product.Id == 0)
             {
                 product.Id = Database.NextProductId++;
                 Database.Products.Add(product);
+                RecordStockMovement(product, 0, product.Quantity, "Create", reason, username, false);
+            }
+            else
+            {
+                if (oldQuantity != product.Quantity)
+                {
+                    RecordStockMovement(product, oldQuantity, product.Quantity, "Edit", reason, username, false);
+                }
             }
             Save();
+        }
+
+        public bool BarcodeExists(Product product)
+        {
+            if (product == null || string.IsNullOrWhiteSpace(product.Barcode))
+            {
+                return false;
+            }
+
+            return Database.Products.Any(p =>
+                p.Id != product.Id &&
+                p.StoreId == product.StoreId &&
+                string.Equals(p.Barcode, product.Barcode, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public void RecordSupplierPurchase(string storeId, Product product, int quantity, decimal unitCost, string supplierName, string username)
+        {
+            if (product == null || quantity <= 0)
+            {
+                return;
+            }
+
+            int oldQuantity = product.Quantity;
+            product.Quantity += quantity;
+            SupplierPurchase purchase = new SupplierPurchase();
+            purchase.Id = Database.NextSupplierPurchaseId++;
+            purchase.CreatedAt = DateTime.Now;
+            purchase.StoreId = storeId;
+            purchase.SupplierName = supplierName;
+            purchase.ProductId = product.Id;
+            purchase.ProductName = product.Name;
+            purchase.Quantity = quantity;
+            purchase.UnitCost = unitCost;
+            purchase.Username = username;
+            Database.SupplierPurchases.Add(purchase);
+            RecordStockMovement(product, oldQuantity, product.Quantity, "Purchase", supplierName, username, false);
+            Save();
+        }
+
+        private void RecordStockMovement(Product product, int oldQuantity, int newQuantity, string type, string reason, string username, bool save)
+        {
+            StockMovement movement = new StockMovement();
+            movement.Id = Database.NextStockMovementId++;
+            movement.CreatedAt = DateTime.Now;
+            movement.StoreId = product.StoreId;
+            movement.ProductId = product.Id;
+            movement.ProductName = product.Name;
+            movement.Type = type;
+            movement.OldQuantity = oldQuantity;
+            movement.NewQuantity = newQuantity;
+            movement.Delta = newQuantity - oldQuantity;
+            movement.Reason = reason;
+            movement.Username = username;
+            Database.StockMovements.Add(movement);
+            if (save) Save();
+        }
+
+        public void MarkDebtPaid(Sale sale, string username)
+        {
+            if (sale == null || !sale.IsDebt || sale.IsDebtPaid)
+            {
+                return;
+            }
+
+            sale.IsDebtPaid = true;
+            sale.DebtPaidAt = DateTime.Now;
+            sale.DebtPaidBy = username;
+            Save();
+        }
+
+        public void SaveUser(User target)
+        {
+            User existing = Database.Users.FirstOrDefault(u => string.Equals(u.Username, target.Username, StringComparison.OrdinalIgnoreCase));
+            if (existing == null)
+            {
+                target.Password = HashPassword(target.Password);
+                Database.Users.Add(target);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(target.Password))
+                {
+                    existing.Password = HashPassword(target.Password);
+                }
+                existing.FullName = target.FullName;
+                existing.Role = target.Role;
+            }
+            Save();
+        }
+
+        public void DeleteUser(string username)
+        {
+            Database.Users.RemoveAll(u => string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase) && u.Username != "admin");
+            Save();
+        }
+
+        public string ExportCsv(string fileName, string content)
+        {
+            string exportDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "exports");
+            Directory.CreateDirectory(exportDirectory);
+            string path = Path.Combine(exportDirectory, fileName);
+            File.WriteAllText(path, content);
+            return path;
+        }
+
+        public int ImportProductsCsv(string sourcePath, string storeId, string username)
+        {
+            if (string.IsNullOrEmpty(sourcePath) || !File.Exists(sourcePath))
+            {
+                return 0;
+            }
+
+            int count = 0;
+            string[] lines = File.ReadAllLines(sourcePath);
+            for (int i = 1; i < lines.Length; i++)
+            {
+                string[] parts = SplitCsvLine(lines[i]);
+                if (parts.Length < 9) continue;
+                string category = parts[1];
+                string name = parts[2];
+                string barcode = parts[3];
+                Product product = Database.Products.FirstOrDefault(p =>
+                    p.StoreId == storeId &&
+                    ((!string.IsNullOrEmpty(barcode) && p.Barcode == barcode) ||
+                     string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)));
+                if (product == null)
+                {
+                    product = new Product { StoreId = storeId };
+                }
+
+                int oldQuantity = product.Quantity;
+                product.Category = category;
+                product.Name = name;
+                product.Barcode = barcode;
+                product.PurchasePrice = ParseDecimal(parts[4]);
+                product.SalePrice = ParseDecimal(parts[5]);
+                product.TaxRate = ParseDecimal(parts[6]);
+                product.Quantity = ParseInt(parts[7]);
+                product.MinimumQuantity = ParseInt(parts[8]);
+                DateTime expiry;
+                product.ExpiryDate = parts.Length > 9 && DateTime.TryParse(parts[9], out expiry) ? expiry : DateTime.Today.AddMonths(12);
+                SaveProduct(product, username, "CSV import", oldQuantity);
+                count++;
+            }
+            return count;
+        }
+
+        private string[] SplitCsvLine(string line)
+        {
+            List<string> values = new List<string>();
+            StringBuilder current = new StringBuilder();
+            bool quoted = false;
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+                if (c == '"')
+                {
+                    if (quoted && i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        current.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        quoted = !quoted;
+                    }
+                }
+                else if (c == ',' && !quoted)
+                {
+                    values.Add(current.ToString());
+                    current.Length = 0;
+                }
+                else
+                {
+                    current.Append(c);
+                }
+            }
+            values.Add(current.ToString());
+            return values.ToArray();
+        }
+
+        private decimal ParseDecimal(string value)
+        {
+            decimal result;
+            return decimal.TryParse(value, out result) ? result : 0;
+        }
+
+        private int ParseInt(string value)
+        {
+            int result;
+            return int.TryParse(value, out result) ? result : 0;
         }
 
         public void DeleteProduct(Product product)

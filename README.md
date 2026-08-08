@@ -32,6 +32,15 @@ The first version targets old store computers and peripherals:
 - Category performance report with most/least sold products
 - ABC stock strategy recommendations
 - Admin action to apply ABC minimum stock levels
+- Admin debt management with paid/unpaid tracking
+- Admin low-stock and expiry alert tables
+- Stock movement history for sales, returns, edits, and purchases
+- Supplier purchase/restock workflow
+- User management for admin/cashier accounts
+- Duplicate barcode protection per store
+- Manual backup/restore screen
+- CSV product import and product/sales export
+- Hashed stored passwords
 - Backup when closing shift
 - Bilingual FR/EN labels
 
@@ -93,5 +102,5 @@ shift-reports\
 - Add direct ESC/POS ticket printer commands if the printer model requires it
 - Add central backend sync for online store stock
 - Add product import/export from Excel or CSV
-- Add user permission editor
+- Add advanced user permission editor
 - Add delivery/order integration

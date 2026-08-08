@@ -21,6 +21,7 @@ namespace OlyDrugstorePOS
             Fr["Cash"] = "Caisse";
             Fr["History"] = "Historique";
             Fr["Stock"] = "Stock";
+            Fr["Admin"] = "Admin";
             Fr["Reports"] = "Rapports";
             Fr["Settings"] = "Parametres";
             Fr["Search"] = "Scanner ou rechercher";
@@ -87,6 +88,27 @@ namespace OlyDrugstorePOS
             Fr["Customer"] = "Client";
             Fr["LowStock"] = "Stock faible";
             Fr["BackupDone"] = "Sauvegarde effectuee";
+            Fr["Debts"] = "Dettes";
+            Fr["MarkPaid"] = "Marquer paye";
+            Fr["Unpaid"] = "Non paye";
+            Fr["Alerts"] = "Alertes";
+            Fr["StockLog"] = "Historique stock";
+            Fr["Users"] = "Utilisateurs";
+            Fr["UserForm"] = "Fiche utilisateur";
+            Fr["FullName"] = "Nom complet";
+            Fr["Role"] = "Role";
+            Fr["SaveUser"] = "Enregistrer";
+            Fr["DeleteUser"] = "Supprimer";
+            Fr["Restock"] = "Reapprovisionnement";
+            Fr["Supplier"] = "Fournisseur";
+            Fr["SaveRestock"] = "Enregistrer stock";
+            Fr["PurchaseHistory"] = "Historique achats";
+            Fr["Files"] = "Fichiers";
+            Fr["BackupNow"] = "Sauvegarde";
+            Fr["RestoreBackup"] = "Restaurer";
+            Fr["ExportProducts"] = "Exporter produits";
+            Fr["ExportSales"] = "Exporter ventes";
+            Fr["ImportProducts"] = "Importer produits";
 
             En["Login"] = "Login";
             En["Username"] = "Username";
@@ -98,6 +120,7 @@ namespace OlyDrugstorePOS
             En["Cash"] = "Cash";
             En["History"] = "History";
             En["Stock"] = "Stock";
+            En["Admin"] = "Admin";
             En["Reports"] = "Reports";
             En["Settings"] = "Settings";
             En["Search"] = "Scan or search";
@@ -164,6 +187,27 @@ namespace OlyDrugstorePOS
             En["Customer"] = "Customer";
             En["LowStock"] = "Low stock";
             En["BackupDone"] = "Backup completed";
+            En["Debts"] = "Debts";
+            En["MarkPaid"] = "Mark paid";
+            En["Unpaid"] = "Unpaid";
+            En["Alerts"] = "Alerts";
+            En["StockLog"] = "Stock history";
+            En["Users"] = "Users";
+            En["UserForm"] = "User form";
+            En["FullName"] = "Full name";
+            En["Role"] = "Role";
+            En["SaveUser"] = "Save user";
+            En["DeleteUser"] = "Delete user";
+            En["Restock"] = "Restock";
+            En["Supplier"] = "Supplier";
+            En["SaveRestock"] = "Save restock";
+            En["PurchaseHistory"] = "Purchase history";
+            En["Files"] = "Files";
+            En["BackupNow"] = "Backup now";
+            En["RestoreBackup"] = "Restore backup";
+            En["ExportProducts"] = "Export products";
+            En["ExportSales"] = "Export sales";
+            En["ImportProducts"] = "Import products";
         }
 
         public static string T(string key)

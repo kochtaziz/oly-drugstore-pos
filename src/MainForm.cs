@@ -79,6 +79,21 @@ namespace OlyDrugstorePOS
         private Sale selectedHistorySale;
         private DataGridView stockStrategyGrid;
         private TextBox categoryStrategyTextBox;
+        private DataGridView debtGrid;
+        private DataGridView alertGrid;
+        private DataGridView stockMovementGrid;
+        private DataGridView usersGrid;
+        private DataGridView purchasesGrid;
+        private TextBox userUsernameInput;
+        private TextBox userPasswordInput;
+        private TextBox userFullNameInput;
+        private ComboBox userRoleInput;
+        private ComboBox restockProductInput;
+        private NumericUpDown restockQuantityInput;
+        private NumericUpDown restockCostInput;
+        private TextBox restockSupplierInput;
+        private User selectedManagedUser;
+        private Sale selectedDebtSale;
 
         public MainForm(DataStore store, User user)
         {
@@ -113,6 +128,7 @@ namespace OlyDrugstorePOS
             {
                 BuildProductsTab();
                 BuildStockStrategyTab();
+                BuildAdminToolsTab();
             }
             else
             {
@@ -816,6 +832,258 @@ namespace OlyDrugstorePOS
             categoryCard.Controls.Add(categoryStrategyTextBox);
         }
 
+        private void BuildAdminToolsTab()
+        {
+            TabPage tab = NewTab("adminToolsTab");
+            TabControl adminTabs = new TabControl();
+            adminTabs.Dock = DockStyle.Fill;
+            adminTabs.Font = UiTheme.FontBold;
+            tab.Controls.Add(adminTabs);
+
+            BuildDebtAdminPage(adminTabs);
+            BuildAlertsAdminPage(adminTabs);
+            BuildStockLogAdminPage(adminTabs);
+            BuildUsersAdminPage(adminTabs);
+            BuildRestockAdminPage(adminTabs);
+            BuildFilesAdminPage(adminTabs);
+        }
+
+        private TabPage InnerTab(TabControl owner, string title)
+        {
+            TabPage page = new TabPage(title);
+            page.BackColor = UiTheme.Background;
+            page.Padding = new Padding(14);
+            owner.TabPages.Add(page);
+            return page;
+        }
+
+        private void BuildDebtAdminPage(TabControl owner)
+        {
+            TabPage page = InnerTab(owner, Localization.T("Debts"));
+            Panel card = UiTheme.CardPanel();
+            card.Dock = DockStyle.Fill;
+            card.Padding = new Padding(18);
+            page.Controls.Add(card);
+            card.Controls.Add(CardTitle(Localization.T("Debts"), 18, 14));
+
+            debtGrid = UiTheme.Grid();
+            debtGrid.Left = 18;
+            debtGrid.Top = 78;
+            debtGrid.Width = 760;
+            debtGrid.Height = 390;
+            debtGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            debtGrid.CellClick += delegate { LoadSelectedDebt(); };
+            card.Controls.Add(debtGrid);
+
+            Button paid = UiTheme.PrimaryButton(Localization.T("MarkPaid"));
+            paid.Name = "markDebtPaidButton";
+            paid.Left = 680;
+            paid.Top = 18;
+            paid.Width = 220;
+            paid.Height = 48;
+            paid.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            paid.Click += delegate { MarkSelectedDebtPaid(); };
+            card.Controls.Add(paid);
+        }
+
+        private void BuildAlertsAdminPage(TabControl owner)
+        {
+            TabPage page = InnerTab(owner, Localization.T("Alerts"));
+            Panel card = UiTheme.CardPanel();
+            card.Dock = DockStyle.Fill;
+            card.Padding = new Padding(18);
+            page.Controls.Add(card);
+            card.Controls.Add(CardTitle(Localization.T("Alerts"), 18, 14));
+
+            alertGrid = UiTheme.Grid();
+            alertGrid.Left = 18;
+            alertGrid.Top = 78;
+            alertGrid.Width = 840;
+            alertGrid.Height = 540;
+            alertGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            card.Controls.Add(alertGrid);
+        }
+
+        private void BuildStockLogAdminPage(TabControl owner)
+        {
+            TabPage page = InnerTab(owner, Localization.T("StockLog"));
+            Panel card = UiTheme.CardPanel();
+            card.Dock = DockStyle.Fill;
+            card.Padding = new Padding(18);
+            page.Controls.Add(card);
+            card.Controls.Add(CardTitle(Localization.T("StockLog"), 18, 14));
+
+            stockMovementGrid = UiTheme.Grid();
+            stockMovementGrid.Left = 18;
+            stockMovementGrid.Top = 78;
+            stockMovementGrid.Width = 840;
+            stockMovementGrid.Height = 540;
+            stockMovementGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            card.Controls.Add(stockMovementGrid);
+        }
+
+        private void BuildUsersAdminPage(TabControl owner)
+        {
+            TabPage page = InnerTab(owner, Localization.T("Users"));
+            TableLayoutPanel shell = PageGrid(2, 1);
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42));
+            page.Controls.Add(shell);
+
+            Panel list = UiTheme.CardPanel();
+            list.Dock = DockStyle.Fill;
+            list.Padding = new Padding(18);
+            shell.Controls.Add(list, 0, 0);
+            list.Controls.Add(CardTitle(Localization.T("Users"), 18, 14));
+            usersGrid = UiTheme.Grid();
+            usersGrid.Left = 18;
+            usersGrid.Top = 78;
+            usersGrid.Width = 520;
+            usersGrid.Height = 520;
+            usersGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            usersGrid.CellClick += delegate { LoadSelectedManagedUser(); };
+            list.Controls.Add(usersGrid);
+
+            Panel form = UiTheme.CardPanel();
+            form.Dock = DockStyle.Fill;
+            form.Padding = new Padding(22);
+            shell.Controls.Add(form, 1, 0);
+            form.Controls.Add(CardTitle(Localization.T("UserForm"), 22, 18));
+            userUsernameInput = AddTextField(form, "managedUsernameLabel", 22, 76, 320);
+            userPasswordInput = AddTextField(form, "managedPasswordLabel", 22, 142, 320);
+            userFullNameInput = AddTextField(form, "managedFullNameLabel", 22, 208, 320);
+            AddLabel(form, "managedRoleLabel", Localization.T("Role"), 22, 274);
+            userRoleInput = new ComboBox();
+            userRoleInput.DropDownStyle = ComboBoxStyle.DropDownList;
+            userRoleInput.Items.AddRange(new object[] { "Admin", "Cashier" });
+            userRoleInput.Left = 22;
+            userRoleInput.Top = 300;
+            userRoleInput.Width = 180;
+            userRoleInput.SelectedIndex = 1;
+            form.Controls.Add(userRoleInput);
+
+            Button save = UiTheme.PrimaryButton(Localization.T("SaveUser"));
+            save.Name = "saveUserButton";
+            save.Left = 22;
+            save.Top = 370;
+            save.Width = 160;
+            save.Height = 50;
+            save.Click += delegate { SaveManagedUser(); };
+            form.Controls.Add(save);
+
+            Button delete = UiTheme.SecondaryButton(Localization.T("DeleteUser"));
+            delete.Name = "deleteUserButton";
+            delete.Left = 198;
+            delete.Top = 370;
+            delete.Width = 160;
+            delete.Height = 50;
+            delete.Click += delegate { DeleteManagedUser(); };
+            form.Controls.Add(delete);
+        }
+
+        private void BuildRestockAdminPage(TabControl owner)
+        {
+            TabPage page = InnerTab(owner, Localization.T("Restock"));
+            TableLayoutPanel shell = PageGrid(2, 1);
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
+            page.Controls.Add(shell);
+
+            Panel form = UiTheme.CardPanel();
+            form.Dock = DockStyle.Fill;
+            form.Padding = new Padding(22);
+            shell.Controls.Add(form, 0, 0);
+            form.Controls.Add(CardTitle(Localization.T("Restock"), 22, 18));
+
+            AddLabel(form, "restockProductLabel", Localization.T("Products"), 22, 76);
+            restockProductInput = new ComboBox();
+            restockProductInput.DropDownStyle = ComboBoxStyle.DropDownList;
+            restockProductInput.Left = 22;
+            restockProductInput.Top = 102;
+            restockProductInput.Width = 330;
+            form.Controls.Add(restockProductInput);
+
+            restockQuantityInput = AddNumberField(form, "restockQuantityLabel", 22, 166, 150);
+            restockCostInput = AddMoneyField(form, "restockCostLabel", 202, 166, 150);
+            restockSupplierInput = AddTextField(form, "restockSupplierLabel", 22, 238, 330);
+            Button save = UiTheme.PrimaryButton(Localization.T("SaveRestock"));
+            save.Name = "saveRestockButton";
+            save.Left = 22;
+            save.Top = 320;
+            save.Width = 330;
+            save.Height = 54;
+            save.Click += delegate { SaveRestock(); };
+            form.Controls.Add(save);
+
+            Panel list = UiTheme.CardPanel();
+            list.Dock = DockStyle.Fill;
+            list.Padding = new Padding(18);
+            shell.Controls.Add(list, 1, 0);
+            list.Controls.Add(CardTitle(Localization.T("PurchaseHistory"), 18, 14));
+            purchasesGrid = UiTheme.Grid();
+            purchasesGrid.Left = 18;
+            purchasesGrid.Top = 78;
+            purchasesGrid.Width = 600;
+            purchasesGrid.Height = 520;
+            purchasesGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            list.Controls.Add(purchasesGrid);
+        }
+
+        private void BuildFilesAdminPage(TabControl owner)
+        {
+            TabPage page = InnerTab(owner, Localization.T("Files"));
+            Panel card = UiTheme.CardPanel();
+            card.Dock = DockStyle.Fill;
+            card.Padding = new Padding(28);
+            page.Controls.Add(card);
+            card.Controls.Add(CardTitle(Localization.T("Files"), 28, 24));
+
+            Button backup = UiTheme.PrimaryButton(Localization.T("BackupNow"));
+            backup.Name = "backupNowButton";
+            backup.Left = 28;
+            backup.Top = 90;
+            backup.Width = 260;
+            backup.Height = 56;
+            backup.Click += delegate { ManualBackup(); };
+            card.Controls.Add(backup);
+
+            Button restore = UiTheme.SecondaryButton(Localization.T("RestoreBackup"));
+            restore.Name = "restoreBackupButton";
+            restore.Left = 310;
+            restore.Top = 90;
+            restore.Width = 260;
+            restore.Height = 56;
+            restore.Click += delegate { RestoreBackup(); };
+            card.Controls.Add(restore);
+
+            Button exportProducts = UiTheme.SecondaryButton(Localization.T("ExportProducts"));
+            exportProducts.Name = "exportProductsButton";
+            exportProducts.Left = 28;
+            exportProducts.Top = 175;
+            exportProducts.Width = 260;
+            exportProducts.Height = 56;
+            exportProducts.Click += delegate { ExportProductsCsv(); };
+            card.Controls.Add(exportProducts);
+
+            Button exportSales = UiTheme.SecondaryButton(Localization.T("ExportSales"));
+            exportSales.Name = "exportSalesButton";
+            exportSales.Left = 310;
+            exportSales.Top = 175;
+            exportSales.Width = 260;
+            exportSales.Height = 56;
+            exportSales.Click += delegate { ExportSalesCsv(); };
+            card.Controls.Add(exportSales);
+
+            Button importProducts = UiTheme.SecondaryButton(Localization.T("ImportProducts"));
+            importProducts.Name = "importProductsButton";
+            importProducts.Left = 592;
+            importProducts.Top = 175;
+            importProducts.Width = 260;
+            importProducts.Height = 56;
+            importProducts.Click += delegate { ImportProductsCsv(); };
+            card.Controls.Add(importProducts);
+        }
+
         private void BuildReportsTab()
         {
             TabPage tab = NewTab("reportsTab");
@@ -983,6 +1251,7 @@ namespace OlyDrugstorePOS
             if (tabs.TabPages.ContainsKey("cashTab")) tabs.TabPages["cashTab"].Text = Localization.T("Cash");
             if (tabs.TabPages.ContainsKey("historyTab")) tabs.TabPages["historyTab"].Text = Localization.T("History");
             if (tabs.TabPages.ContainsKey("stockStrategyTab")) tabs.TabPages["stockStrategyTab"].Text = Localization.T("Stock");
+            if (tabs.TabPages.ContainsKey("adminToolsTab")) tabs.TabPages["adminToolsTab"].Text = Localization.T("Admin");
             if (tabs.TabPages.ContainsKey("reportsTab")) tabs.TabPages["reportsTab"].Text = Localization.T("Reports");
             if (tabs.TabPages.ContainsKey("settingsTab")) tabs.TabPages["settingsTab"].Text = Localization.T("Settings");
 
@@ -1017,7 +1286,24 @@ namespace OlyDrugstorePOS
             SetText("refreshHistoryButton", Localization.T("Refresh"));
             SetText("reprintHistoryButton", Localization.T("Reprint"));
             SetText("applyAbcButton", Localization.T("ApplyABC"));
+            SetText("markDebtPaidButton", Localization.T("MarkPaid"));
+            SetText("saveUserButton", Localization.T("SaveUser"));
+            SetText("deleteUserButton", Localization.T("DeleteUser"));
+            SetText("saveRestockButton", Localization.T("SaveRestock"));
+            SetText("backupNowButton", Localization.T("BackupNow"));
+            SetText("restoreBackupButton", Localization.T("RestoreBackup"));
+            SetText("exportProductsButton", Localization.T("ExportProducts"));
+            SetText("exportSalesButton", Localization.T("ExportSales"));
+            SetText("importProductsButton", Localization.T("ImportProducts"));
             SetText("countedLabel", Localization.T("CountedCash"));
+            SetText("managedUsernameLabel", Localization.T("Username"));
+            SetText("managedPasswordLabel", Localization.T("Password"));
+            SetText("managedFullNameLabel", Localization.T("FullName"));
+            SetText("managedRoleLabel", Localization.T("Role"));
+            SetText("restockProductLabel", Localization.T("Products"));
+            SetText("restockQuantityLabel", Localization.T("Quantity"));
+            SetText("restockCostLabel", Localization.T("PurchasePrice"));
+            SetText("restockSupplierLabel", Localization.T("Supplier"));
             SetText("movementReasonLabel", Localization.T("Reason"));
             RefreshAll();
         }
@@ -1035,6 +1321,7 @@ namespace OlyDrugstorePOS
             RefreshCash();
             RefreshSalesHistory();
             RefreshStockStrategy();
+            RefreshAdminTools();
             RefreshReports();
         }
 
@@ -2210,6 +2497,269 @@ namespace OlyDrugstorePOS
             MessageBox.Show(Localization.T("ABCUpdated"));
         }
 
+        private void RefreshAdminTools()
+        {
+            if (user.Role != UserRole.Admin)
+            {
+                return;
+            }
+
+            RefreshDebtGrid();
+            RefreshAlertGrid();
+            RefreshStockMovementGrid();
+            RefreshUsersGrid();
+            RefreshRestockProducts();
+            RefreshPurchasesGrid();
+        }
+
+        private void RefreshDebtGrid()
+        {
+            if (debtGrid == null) return;
+            var rows = store.Database.Sales
+                .Where(s => s.StoreId == activeStoreId && s.IsDebt)
+                .OrderBy(s => s.IsDebtPaid)
+                .ThenByDescending(s => s.CreatedAt)
+                .Select(s => new DebtRow
+                {
+                    SaleId = s.Id,
+                    Ticket = s.TicketNumber,
+                    Date = s.CreatedAt.ToString("g"),
+                    Customer = s.CustomerName,
+                    Total = Money(s.Total),
+                    Status = s.IsDebtPaid ? Localization.T("Paid") : Localization.T("Unpaid"),
+                    PaidAt = s.IsDebtPaid ? s.DebtPaidAt.ToString("g") : ""
+                })
+                .ToList();
+            debtGrid.DataSource = null;
+            debtGrid.DataSource = rows;
+            if (debtGrid.Columns.Contains("SaleId")) debtGrid.Columns["SaleId"].Visible = false;
+        }
+
+        private void LoadSelectedDebt()
+        {
+            if (debtGrid == null || debtGrid.CurrentRow == null) return;
+            DebtRow row = debtGrid.CurrentRow.DataBoundItem as DebtRow;
+            selectedDebtSale = row == null ? null : store.Database.Sales.FirstOrDefault(s => s.Id == row.SaleId);
+        }
+
+        private void MarkSelectedDebtPaid()
+        {
+            LoadSelectedDebt();
+            if (selectedDebtSale == null)
+            {
+                MessageBox.Show("Select a debt first");
+                return;
+            }
+
+            store.MarkDebtPaid(selectedDebtSale, user.Username);
+            RefreshAll();
+        }
+
+        private void RefreshAlertGrid()
+        {
+            if (alertGrid == null) return;
+            var rows = store.Database.Products
+                .Where(p => p.StoreId == activeStoreId && (p.Quantity <= p.MinimumQuantity || p.ExpiryDate <= DateTime.Today.AddDays(30)))
+                .OrderBy(p => p.Quantity <= p.MinimumQuantity ? 0 : 1)
+                .ThenBy(p => p.ExpiryDate)
+                .Select(p => new AlertRow
+                {
+                    Product = p.Name,
+                    Category = p.Category,
+                    Quantity = p.Quantity,
+                    Minimum = p.MinimumQuantity,
+                    Expiry = p.ExpiryDate.ToShortDateString(),
+                    Alert = p.Quantity <= p.MinimumQuantity ? Localization.T("LowStock") : Localization.T("Expiry")
+                })
+                .ToList();
+            alertGrid.DataSource = null;
+            alertGrid.DataSource = rows;
+        }
+
+        private void RefreshStockMovementGrid()
+        {
+            if (stockMovementGrid == null) return;
+            var rows = store.Database.StockMovements
+                .Where(m => m.StoreId == activeStoreId)
+                .OrderByDescending(m => m.CreatedAt)
+                .Take(250)
+                .Select(m => new StockMovementRow
+                {
+                    Date = m.CreatedAt.ToString("g"),
+                    Product = m.ProductName,
+                    Type = m.Type,
+                    Old = m.OldQuantity,
+                    New = m.NewQuantity,
+                    Delta = m.Delta,
+                    Reason = m.Reason,
+                    User = m.Username
+                })
+                .ToList();
+            stockMovementGrid.DataSource = null;
+            stockMovementGrid.DataSource = rows;
+        }
+
+        private void RefreshUsersGrid()
+        {
+            if (usersGrid == null) return;
+            usersGrid.DataSource = null;
+            usersGrid.DataSource = store.Database.Users
+                .Select(u => new UserRow { Username = u.Username, FullName = u.FullName, Role = u.Role.ToString() })
+                .ToList();
+        }
+
+        private void LoadSelectedManagedUser()
+        {
+            if (usersGrid == null || usersGrid.CurrentRow == null) return;
+            UserRow row = usersGrid.CurrentRow.DataBoundItem as UserRow;
+            selectedManagedUser = row == null ? null : store.Database.Users.FirstOrDefault(u => u.Username == row.Username);
+            if (selectedManagedUser == null) return;
+            userUsernameInput.Text = selectedManagedUser.Username;
+            userPasswordInput.Text = "";
+            userFullNameInput.Text = selectedManagedUser.FullName;
+            userRoleInput.SelectedItem = selectedManagedUser.Role.ToString();
+        }
+
+        private void SaveManagedUser()
+        {
+            string username = userUsernameInput.Text.Trim();
+            if (username.Length == 0 || (selectedManagedUser == null && userPasswordInput.Text.Trim().Length == 0))
+            {
+                MessageBox.Show("Username is required. New users also need a password.");
+                return;
+            }
+
+            User target = new User();
+            target.Username = username;
+            target.Password = userPasswordInput.Text.Trim();
+            target.FullName = userFullNameInput.Text.Trim();
+            target.Role = userRoleInput.SelectedItem.ToString() == "Admin" ? UserRole.Admin : UserRole.Cashier;
+            store.SaveUser(target);
+            RefreshAll();
+        }
+
+        private void DeleteManagedUser()
+        {
+            LoadSelectedManagedUser();
+            if (selectedManagedUser == null) return;
+            if (selectedManagedUser.Username == user.Username)
+            {
+                MessageBox.Show("You cannot delete the active user");
+                return;
+            }
+            store.DeleteUser(selectedManagedUser.Username);
+            selectedManagedUser = null;
+            userUsernameInput.Text = "";
+            userPasswordInput.Text = "";
+            userFullNameInput.Text = "";
+            RefreshAll();
+        }
+
+        private void RefreshRestockProducts()
+        {
+            if (restockProductInput == null) return;
+            string selected = restockProductInput.SelectedItem == null ? "" : restockProductInput.SelectedItem.ToString();
+            restockProductInput.Items.Clear();
+            foreach (Product product in store.Database.Products.Where(p => p.StoreId == activeStoreId).OrderBy(p => p.Name))
+            {
+                restockProductInput.Items.Add(product.Id + " - " + product.Name);
+            }
+            if (restockProductInput.Items.Count > 0)
+            {
+                int index = restockProductInput.Items.IndexOf(selected);
+                restockProductInput.SelectedIndex = index >= 0 ? index : 0;
+            }
+        }
+
+        private void SaveRestock()
+        {
+            if (restockProductInput == null || restockProductInput.SelectedItem == null) return;
+            int productId;
+            string raw = restockProductInput.SelectedItem.ToString().Split('-')[0].Trim();
+            if (!int.TryParse(raw, out productId)) return;
+            Product product = store.Database.Products.FirstOrDefault(p => p.Id == productId);
+            store.RecordSupplierPurchase(activeStoreId, product, (int)restockQuantityInput.Value, restockCostInput.Value, restockSupplierInput.Text.Trim(), user.Username);
+            restockQuantityInput.Value = 0;
+            restockCostInput.Value = 0;
+            RefreshAll();
+        }
+
+        private void RefreshPurchasesGrid()
+        {
+            if (purchasesGrid == null) return;
+            purchasesGrid.DataSource = null;
+            purchasesGrid.DataSource = store.Database.SupplierPurchases
+                .Where(p => p.StoreId == activeStoreId)
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(200)
+                .Select(p => new PurchaseRow
+                {
+                    Date = p.CreatedAt.ToString("g"),
+                    Supplier = p.SupplierName,
+                    Product = p.ProductName,
+                    Quantity = p.Quantity,
+                    UnitCost = Money(p.UnitCost),
+                    User = p.Username
+                })
+                .ToList();
+        }
+
+        private void ManualBackup()
+        {
+            string path = store.Backup();
+            MessageBox.Show(path, Localization.T("BackupDone"));
+        }
+
+        private void RestoreBackup()
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Filter = "XML backup (*.xml)|*.xml|All files (*.*)|*.*";
+            if (dialog.ShowDialog() != DialogResult.OK) return;
+            store.RestoreBackup(dialog.FileName);
+            RefreshAll();
+            MessageBox.Show(Localization.T("BackupDone"));
+        }
+
+        private void ExportProductsCsv()
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("Store,Category,Name,Barcode,PurchasePrice,SalePrice,Tax,Quantity,Minimum,Expiry");
+            foreach (Product p in store.Database.Products.Where(p => p.StoreId == activeStoreId).OrderBy(p => p.Category).ThenBy(p => p.Name))
+            {
+                builder.AppendLine(activeStoreId + "," + Csv(p.Category) + "," + Csv(p.Name) + "," + Csv(p.Barcode) + "," + p.PurchasePrice + "," + p.SalePrice + "," + p.TaxRate + "," + p.Quantity + "," + p.MinimumQuantity + "," + p.ExpiryDate.ToShortDateString());
+            }
+            string path = store.ExportCsv("products-" + activeStoreId + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".csv", builder.ToString());
+            MessageBox.Show(path);
+        }
+
+        private void ExportSalesCsv()
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("Store,Ticket,Date,Cashier,Payment,Total,Debt,Paid,Customer");
+            foreach (Sale s in store.Database.Sales.Where(s => s.StoreId == activeStoreId).OrderByDescending(s => s.CreatedAt))
+            {
+                builder.AppendLine(activeStoreId + "," + s.TicketNumber + "," + Csv(s.CreatedAt.ToString("g")) + "," + Csv(s.CashierUsername) + "," + Csv(s.PaymentMethod) + "," + s.Total + "," + s.IsDebt + "," + s.IsDebtPaid + "," + Csv(s.CustomerName));
+            }
+            string path = store.ExportCsv("sales-" + activeStoreId + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".csv", builder.ToString());
+            MessageBox.Show(path);
+        }
+
+        private void ImportProductsCsv()
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+            if (dialog.ShowDialog() != DialogResult.OK) return;
+            int count = store.ImportProductsCsv(dialog.FileName, activeStoreId, user.Username);
+            RefreshAll();
+            MessageBox.Show(count + " products imported/updated.");
+        }
+
+        private string Csv(string value)
+        {
+            value = value ?? "";
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+
         private void LoadSelectedProduct()
         {
             if (stockGrid.CurrentRow == null) return;
@@ -2231,6 +2781,7 @@ namespace OlyDrugstorePOS
         private void SaveProduct()
         {
             Product product = selectedProduct ?? new Product();
+            int oldQuantity = selectedProduct == null ? 0 : selectedProduct.Quantity;
             product.Name = productNameInput.Text.Trim();
             product.Category = productCategoryInput.Text.Trim();
             product.Barcode = barcodeInput.Text.Trim();
@@ -2241,7 +2792,13 @@ namespace OlyDrugstorePOS
             product.MinimumQuantity = (int)minimumInput.Value;
             product.ExpiryDate = expiryInput.Value.Date;
             product.StoreId = productStoreInput.SelectedItem.ToString();
-            store.SaveProduct(product);
+            if (store.BarcodeExists(product))
+            {
+                MessageBox.Show("This barcode already exists in this store.");
+                return;
+            }
+
+            store.SaveProduct(product, user.Username, "Product form update", oldQuantity);
 
             selectedProduct = null;
             ClearProductForm();
@@ -2310,7 +2867,26 @@ namespace OlyDrugstorePOS
                 return;
             }
 
-            store.CloseSession(session, countedCashInput.Value);
+            decimal counted = countedCashInput.Value;
+            decimal cashSales = store.CashSalesForSession(session);
+            decimal deposits = session.Movements.Where(m => m.Type == "Deposit").Sum(m => m.Amount);
+            decimal withdrawals = session.Movements.Where(m => m.Type == "Withdrawal").Sum(m => m.Amount);
+            decimal expected = session.OpeningFund + cashSales + deposits - withdrawals;
+            decimal difference = counted - expected;
+            decimal bankDeposit = Math.Max(0, counted - 200m);
+            string message =
+                "Expected cash: " + Money(expected) + "\n" +
+                "Counted cash: " + Money(counted) + "\n" +
+                "Difference: " + Money(difference) + "\n" +
+                "Leave in register: " + Money(200m) + "\n" +
+                "Bank deposit: " + Money(bankDeposit) + "\n\n" +
+                "Close this shift?";
+            if (MessageBox.Show(message, Localization.T("CloseShift"), MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            {
+                return;
+            }
+
+            store.CloseSession(session, counted);
             string report = BuildShiftClosingReport(session);
             string reportPath = SaveShiftClosingReport(session, report);
             PrintShiftClosingReport(report);
@@ -2807,6 +3383,56 @@ namespace OlyDrugstorePOS
             public int SuggestedMinimum { get; set; }
             public int ReorderQty { get; set; }
             public string Movement { get; set; }
+        }
+
+        private class DebtRow
+        {
+            public int SaleId { get; set; }
+            public string Ticket { get; set; }
+            public string Date { get; set; }
+            public string Customer { get; set; }
+            public string Total { get; set; }
+            public string Status { get; set; }
+            public string PaidAt { get; set; }
+        }
+
+        private class AlertRow
+        {
+            public string Alert { get; set; }
+            public string Category { get; set; }
+            public string Product { get; set; }
+            public int Quantity { get; set; }
+            public int Minimum { get; set; }
+            public string Expiry { get; set; }
+        }
+
+        private class StockMovementRow
+        {
+            public string Date { get; set; }
+            public string Product { get; set; }
+            public string Type { get; set; }
+            public int Old { get; set; }
+            public int New { get; set; }
+            public int Delta { get; set; }
+            public string Reason { get; set; }
+            public string User { get; set; }
+        }
+
+        private class UserRow
+        {
+            public string Username { get; set; }
+            public string FullName { get; set; }
+            public string Role { get; set; }
+        }
+
+        private class PurchaseRow
+        {
+            public string Date { get; set; }
+            public string Supplier { get; set; }
+            public string Product { get; set; }
+            public int Quantity { get; set; }
+            public string UnitCost { get; set; }
+            public string User { get; set; }
         }
     }
 }
