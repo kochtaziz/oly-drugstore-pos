@@ -571,7 +571,7 @@ namespace OlyDrugstorePOS
             AddLabel(checkoutCard, "paymentLabel", Localization.T("Payment"), 150, 316);
             paymentComboBox = new ComboBox();
             paymentComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            paymentComboBox.Items.AddRange(new object[] { "Cash", "Card", "Online", "In store" });
+            paymentComboBox.Items.AddRange(new object[] { "Cash", "Card", "Online", "In store", "Debt" });
             paymentComboBox.SelectedIndex = 0;
             paymentComboBox.Left = 150;
             paymentComboBox.Top = 342;
@@ -579,12 +579,35 @@ namespace OlyDrugstorePOS
             paymentComboBox.Font = new Font("Segoe UI", 12, FontStyle.Bold);
             paymentComboBox.BackColor = Color.White;
             paymentComboBox.ForeColor = UiTheme.Text;
+            paymentComboBox.SelectedIndexChanged += delegate
+            {
+                if (debtCheckBox != null && paymentComboBox.SelectedItem != null && paymentComboBox.SelectedItem.ToString() == "Debt")
+                {
+                    debtCheckBox.Checked = true;
+                }
+            };
             checkoutCard.Controls.Add(paymentComboBox);
 
             returnCheckBox = Check(Localization.T("Return"), "returnCheckBox", 250, 284);
+            StyleCheckoutOption(returnCheckBox);
             checkoutCard.Controls.Add(returnCheckBox);
 
             debtCheckBox = Check(Localization.T("Debt"), "debtCheckBox", 340, 284);
+            StyleCheckoutOption(debtCheckBox);
+            debtCheckBox.CheckedChanged += delegate
+            {
+                if (paymentComboBox != null && paymentComboBox.SelectedItem != null)
+                {
+                    if (debtCheckBox.Checked && paymentComboBox.Items.Contains("Debt"))
+                    {
+                        paymentComboBox.SelectedItem = "Debt";
+                    }
+                    else if (!debtCheckBox.Checked && paymentComboBox.SelectedItem.ToString() == "Debt")
+                    {
+                        paymentComboBox.SelectedItem = "Cash";
+                    }
+                }
+            };
             checkoutCard.Controls.Add(debtCheckBox);
 
             AddLabel(checkoutCard, "customerLabel", Localization.T("Customer"), 300, 316);
@@ -1392,6 +1415,18 @@ namespace OlyDrugstorePOS
             return check;
         }
 
+        private void StyleCheckoutOption(CheckBox check)
+        {
+            check.Appearance = Appearance.Button;
+            check.FlatStyle = FlatStyle.Flat;
+            check.FlatAppearance.BorderColor = UiTheme.BorderStrong;
+            check.FlatAppearance.CheckedBackColor = UiTheme.AccentSoft;
+            check.BackColor = Color.White;
+            check.TextAlign = ContentAlignment.MiddleCenter;
+            check.Height = 38;
+            check.Font = UiTheme.FontBold;
+        }
+
         private void RefreshText()
         {
             if (tabs.TabPages.ContainsKey("salesTab")) tabs.TabPages["salesTab"].Text = Localization.T("Sales");
@@ -2058,75 +2093,102 @@ namespace OlyDrugstorePOS
         {
             int pad = 18;
             int gap = 10;
-            int printTop = Math.Max(inputTop + 178, checkoutHeight - 62);
-            int checkoutTop = printTop - 56;
-            int totalTop = checkoutTop - 42;
-            int fieldsTop = Math.Min(inputTop, totalTop - 68);
-            if (checkoutHeight < 500)
+
+            if (contentWidth < 430)
             {
-                fieldsTop = inputTop;
-                totalTop = fieldsTop + 48;
-                checkoutTop = totalTop + 36;
-                printTop = checkoutTop + 50;
-            }
-            if (fieldsTop < cartGrid.Bottom + 66)
-            {
-                fieldsTop = cartGrid.Bottom + 66;
-                totalTop = fieldsTop + 62;
-                checkoutTop = totalTop + 42;
-                printTop = checkoutTop + 56;
+                int optionTop = inputTop;
+                employeeDiscountCheckBox.Left = pad;
+                employeeDiscountCheckBox.Top = optionTop;
+                employeeDiscountCheckBox.Width = contentWidth;
+                employeeDiscountCheckBox.Height = 38;
+
+                int halfWidth = (contentWidth - gap) / 2;
+                returnCheckBox.Left = pad;
+                returnCheckBox.Top = optionTop + 44;
+                returnCheckBox.Width = halfWidth;
+                debtCheckBox.Left = pad + halfWidth + gap;
+                debtCheckBox.Top = optionTop + 44;
+                debtCheckBox.Width = contentWidth - halfWidth - gap;
+
+                int fieldsTop = optionTop + 118;
+                int columnWidth = (contentWidth - gap) / 2;
+                MoveLabel("discountLabel", pad, fieldsTop - 26, columnWidth);
+                saleDiscountInput.Left = pad;
+                saleDiscountInput.Top = fieldsTop;
+                saleDiscountInput.Width = columnWidth;
+
+                MoveLabel("paymentLabel", pad + columnWidth + gap, fieldsTop - 26, columnWidth);
+                paymentComboBox.Left = pad + columnWidth + gap;
+                paymentComboBox.Top = fieldsTop;
+                paymentComboBox.Width = columnWidth;
+
+                int customerTop = fieldsTop + 66;
+                MoveLabel("customerLabel", pad, customerTop - 26, contentWidth);
+                customerTextBox.Left = pad;
+                customerTextBox.Top = customerTop;
+                customerTextBox.Width = contentWidth;
+
+                totalLabel.Left = pad;
+                totalLabel.Top = customerTop + 50;
+                totalLabel.Width = contentWidth;
+
+                Control checkoutButton = FindNamedControl(printReceiptButton.Parent, "checkoutButton");
+                if (checkoutButton != null)
+                {
+                    checkoutButton.Left = pad;
+                    checkoutButton.Top = totalLabel.Bottom + 8;
+                    checkoutButton.Width = contentWidth;
+                }
+
+                printReceiptButton.Left = pad;
+                printReceiptButton.Top = checkoutButton == null ? totalLabel.Bottom + 64 : checkoutButton.Bottom + 8;
+                printReceiptButton.Width = contentWidth;
+                return;
             }
 
+            int optionTopWide = inputTop;
+            int wideFieldsTop = optionTopWide + 58;
             employeeDiscountCheckBox.Left = pad;
-            employeeDiscountCheckBox.Top = fieldsTop - 58;
-            employeeDiscountCheckBox.Width = Math.Min(160, contentWidth / 2);
-            if (contentWidth < 380)
-            {
-                returnCheckBox.Left = pad + employeeDiscountCheckBox.Width + gap;
-                returnCheckBox.Top = fieldsTop - 58;
-                returnCheckBox.Width = Math.Max(90, contentWidth - employeeDiscountCheckBox.Width - gap);
-                debtCheckBox.Left = pad;
-                debtCheckBox.Top = fieldsTop - 32;
-                debtCheckBox.Width = 100;
-            }
-            else
-            {
-                returnCheckBox.Left = pad + employeeDiscountCheckBox.Width + gap;
-                returnCheckBox.Top = fieldsTop - 58;
-                returnCheckBox.Width = 96;
-                debtCheckBox.Left = returnCheckBox.Right + gap;
-                debtCheckBox.Top = fieldsTop - 58;
-                debtCheckBox.Width = 90;
-            }
+            employeeDiscountCheckBox.Top = optionTopWide;
+            employeeDiscountCheckBox.Width = Math.Min(170, contentWidth / 3);
+            returnCheckBox.Left = employeeDiscountCheckBox.Right + gap;
+            returnCheckBox.Top = optionTopWide;
+            returnCheckBox.Width = Math.Min(120, contentWidth / 4);
+            debtCheckBox.Left = returnCheckBox.Right + gap;
+            debtCheckBox.Top = optionTopWide;
+            debtCheckBox.Width = Math.Max(130, contentWidth - debtCheckBox.Left + pad);
 
-            int columnWidth = Math.Max(92, (contentWidth - (gap * 2)) / 3);
-            MoveLabel("discountLabel", pad, fieldsTop - 26, columnWidth);
+            int wideColumnWidth = Math.Max(92, (contentWidth - (gap * 2)) / 3);
+            MoveLabel("discountLabel", pad, wideFieldsTop - 26, wideColumnWidth);
             saleDiscountInput.Left = pad;
-            saleDiscountInput.Top = fieldsTop;
-            saleDiscountInput.Width = columnWidth;
+            saleDiscountInput.Top = wideFieldsTop;
+            saleDiscountInput.Width = wideColumnWidth;
 
-            MoveLabel("paymentLabel", pad + columnWidth + gap, fieldsTop - 26, columnWidth);
-            paymentComboBox.Left = pad + columnWidth + gap;
-            paymentComboBox.Top = fieldsTop;
-            paymentComboBox.Width = columnWidth;
+            MoveLabel("paymentLabel", pad + wideColumnWidth + gap, wideFieldsTop - 26, wideColumnWidth);
+            paymentComboBox.Left = pad + wideColumnWidth + gap;
+            paymentComboBox.Top = wideFieldsTop;
+            paymentComboBox.Width = wideColumnWidth;
 
-            MoveLabel("customerLabel", pad + (columnWidth + gap) * 2, fieldsTop - 26, columnWidth);
-            customerTextBox.Left = pad + (columnWidth + gap) * 2;
-            customerTextBox.Top = fieldsTop;
-            customerTextBox.Width = contentWidth - (columnWidth + gap) * 2;
+            MoveLabel("customerLabel", pad + (wideColumnWidth + gap) * 2, wideFieldsTop - 26, wideColumnWidth);
+            customerTextBox.Left = pad + (wideColumnWidth + gap) * 2;
+            customerTextBox.Top = wideFieldsTop;
+            customerTextBox.Width = contentWidth - (wideColumnWidth + gap) * 2;
 
+            int totalTop = wideFieldsTop + 58;
+            int checkoutTop = totalTop + 42;
+            int printTop = checkoutTop + 56;
             totalLabel.Left = pad;
             totalLabel.Top = totalTop;
             totalLabel.Width = contentWidth;
             printReceiptButton.Left = pad;
             printReceiptButton.Top = printTop;
             printReceiptButton.Width = contentWidth;
-            Control checkoutButton = FindNamedControl(printReceiptButton.Parent, "checkoutButton");
-            if (checkoutButton != null)
+            Control wideCheckoutButton = FindNamedControl(printReceiptButton.Parent, "checkoutButton");
+            if (wideCheckoutButton != null)
             {
-                checkoutButton.Left = pad;
-                checkoutButton.Top = checkoutTop;
-                checkoutButton.Width = contentWidth;
+                wideCheckoutButton.Left = pad;
+                wideCheckoutButton.Top = checkoutTop;
+                wideCheckoutButton.Width = contentWidth;
             }
         }
 
@@ -2679,6 +2741,13 @@ namespace OlyDrugstorePOS
             {
                 MessageBox.Show(Localization.T("OpenCashSessionFirst"));
                 tabs.SelectedTab = tabs.TabPages["cashTab"];
+                return;
+            }
+
+            if (debtCheckBox.Checked && string.IsNullOrWhiteSpace(customerTextBox.Text))
+            {
+                MessageBox.Show(Localization.T("CustomerRequiredForDebt"));
+                customerTextBox.Focus();
                 return;
             }
 
@@ -3573,7 +3642,7 @@ namespace OlyDrugstorePOS
         {
             if (cashStatusLabel == null || cashKpiLabel == null)
             {
-                if (sessionSummaryLabel != null) sessionSummaryLabel.Text = user.Role == UserRole.Admin ? Localization.T("ProductManagement") : "";
+                if (sessionSummaryLabel != null) sessionSummaryLabel.Text = "";
                 return;
             }
 

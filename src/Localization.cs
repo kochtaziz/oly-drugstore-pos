@@ -120,6 +120,7 @@ namespace OlyDrugstorePOS
             Fr["OutOfStock"] = "Stock insuffisant";
             Fr["AvailableStock"] = "Stock disponible";
             Fr["RequestedQuantity"] = "Quantite demandee";
+            Fr["CustomerRequiredForDebt"] = "Le nom du client est obligatoire pour une dette";
             Fr["Name"] = "Nom";
             Fr["Category"] = "Categorie";
             Fr["CategoryShort"] = "Cat";
@@ -294,6 +295,7 @@ namespace OlyDrugstorePOS
             En["OutOfStock"] = "Not enough stock";
             En["AvailableStock"] = "Available stock";
             En["RequestedQuantity"] = "Requested quantity";
+            En["CustomerRequiredForDebt"] = "Customer name is required for debt";
             En["Name"] = "Name";
             En["Category"] = "Category";
             En["CategoryShort"] = "Cat";
