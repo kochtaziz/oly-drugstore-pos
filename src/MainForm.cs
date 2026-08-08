@@ -50,9 +50,11 @@ namespace OlyDrugstorePOS
         private string activeCategory = "All";
         private bool suppressSearchAutoAdd;
         private bool refreshingCategories;
+        private bool scannerSubmitInProgress;
         private string lastCategoryRenderKey = "";
         private string lastProductRenderKey = "";
         private Timer responsiveLayoutTimer;
+        private Timer scannerAutoAddTimer;
 
         private DataGridView stockGrid;
         private TextBox productNameInput;
@@ -302,7 +304,7 @@ namespace OlyDrugstorePOS
             {
                 if (e.KeyCode == Keys.Enter)
                 {
-                    AddProductToCart(searchTextBox.Text);
+                    SubmitScannerText(true);
                     e.SuppressKeyPress = true;
                 }
             };
@@ -393,6 +395,11 @@ namespace OlyDrugstorePOS
             productViewportPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
             productViewportPanel.BackColor = UiTheme.CardAlt;
             productViewportPanel.BorderStyle = BorderStyle.None;
+            productViewportPanel.MouseWheel += delegate(object sender, MouseEventArgs e)
+            {
+                ScrollProductsTo(-productButtonsPanel.Top - Math.Sign(e.Delta) * 96);
+                SyncProductScrollBarFromPanel();
+            };
             productCard.Controls.Add(productViewportPanel);
 
             productButtonsPanel = new SmoothFlowLayoutPanel();
@@ -414,11 +421,20 @@ namespace OlyDrugstorePOS
             productScrollBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
             productScrollBar.SmallChange = 48;
             productScrollBar.LargeChange = 144;
+            productScrollBar.Visible = true;
             productScrollBar.Scroll += delegate(object sender, ScrollEventArgs e)
             {
                 ScrollProductsTo(e.NewValue);
             };
             productCard.Controls.Add(productScrollBar);
+
+            scannerAutoAddTimer = new Timer();
+            scannerAutoAddTimer.Interval = 120;
+            scannerAutoAddTimer.Tick += delegate
+            {
+                scannerAutoAddTimer.Stop();
+                SubmitScannerText(false);
+            };
 
             Panel checkoutCard = UiTheme.CardPanel();
             checkoutCard.Dock = DockStyle.Fill;
@@ -1576,11 +1592,12 @@ namespace OlyDrugstorePOS
             }
 
             int scrollableHeight = Math.Max(0, productButtonsPanel.Height - productViewportPanel.Height);
-            productScrollBar.Enabled = scrollableHeight > 0;
+            productScrollBar.Visible = true;
+            productScrollBar.Enabled = true;
             productScrollBar.Minimum = 0;
             productScrollBar.LargeChange = 144;
             productScrollBar.SmallChange = 48;
-            productScrollBar.Maximum = scrollableHeight + productScrollBar.LargeChange - 1;
+            productScrollBar.Maximum = Math.Max(productScrollBar.LargeChange, scrollableHeight + productScrollBar.LargeChange - 1);
             int current = Math.Min(scrollableHeight, Math.Max(0, -productButtonsPanel.Top));
             productScrollBar.Value = Math.Min(productScrollBar.Maximum - productScrollBar.LargeChange + 1, current);
         }
@@ -1628,7 +1645,7 @@ namespace OlyDrugstorePOS
 
         private void SyncProductScrollBarFromPanel()
         {
-            if (productButtonsPanel == null || productViewportPanel == null || productScrollBar == null || !productScrollBar.Enabled)
+            if (productButtonsPanel == null || productViewportPanel == null || productScrollBar == null)
             {
                 return;
             }
@@ -2099,32 +2116,97 @@ namespace OlyDrugstorePOS
             }
 
             string query = searchTextBox.Text.Trim();
-            if (query.Length >= 6)
+            if (scannerAutoAddTimer != null)
             {
-                Product exact = store.Database.Products.FirstOrDefault(p =>
-                    p.StoreId == activeStoreId &&
-                    !string.IsNullOrEmpty(p.Barcode) &&
-                    p.Barcode == query);
-
-                if (exact != null)
-                {
-                    AddProductToCart(query);
-                    return;
-                }
+                scannerAutoAddTimer.Stop();
             }
 
             RefreshProducts();
+
+            if (query.Length >= 4 && scannerAutoAddTimer != null)
+            {
+                scannerAutoAddTimer.Start();
+            }
+        }
+
+        private void SubmitScannerText(bool showMessageIfMissing)
+        {
+            if (scannerSubmitInProgress || searchTextBox == null)
+            {
+                return;
+            }
+
+            string query = searchTextBox.Text.Trim();
+            if (query.Length == 0)
+            {
+                return;
+            }
+
+            Product exactBarcode = FindActiveStoreProduct(query, true);
+            if (exactBarcode != null)
+            {
+                scannerSubmitInProgress = true;
+                try
+                {
+                    AddProductToCart(exactBarcode);
+                }
+                finally
+                {
+                    scannerSubmitInProgress = false;
+                }
+                return;
+            }
+
+            if (showMessageIfMissing)
+            {
+                Product product = FindActiveStoreProduct(query, false);
+                if (product != null)
+                {
+                    AddProductToCart(product);
+                    return;
+                }
+
+                MessageBox.Show("Product not found");
+            }
+        }
+
+        private Product FindActiveStoreProduct(string query, bool barcodeOnly)
+        {
+            query = (query ?? "").Trim();
+            if (query.Length == 0)
+            {
+                return null;
+            }
+
+            string normalized = query.ToLowerInvariant();
+            Product exactBarcode = store.Database.Products.FirstOrDefault(p =>
+                p.StoreId == activeStoreId &&
+                !string.IsNullOrEmpty(p.Barcode) &&
+                string.Equals(p.Barcode.Trim(), query, StringComparison.OrdinalIgnoreCase));
+            if (exactBarcode != null || barcodeOnly)
+            {
+                return exactBarcode;
+            }
+
+            return store.Database.Products.FirstOrDefault(p =>
+                p.StoreId == activeStoreId &&
+                p.Name.ToLowerInvariant().Contains(normalized));
         }
 
         private void AddProductToCart(string query)
         {
-            Product product = store.FindProduct(query);
-            if (product == null || product.StoreId != activeStoreId)
+            Product product = FindActiveStoreProduct(query, false);
+            if (product == null)
             {
                 MessageBox.Show("Product not found");
                 return;
             }
 
+            AddProductToCart(product);
+        }
+
+        private void AddProductToCart(Product product)
+        {
             int quantityToAdd = addQuantityInput == null ? 1 : (int)addQuantityInput.Value;
             SaleItem existing = cart.FirstOrDefault(i => i.ProductId == product.Id);
             if (existing != null) existing.Quantity += quantityToAdd;
