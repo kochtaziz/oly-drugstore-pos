@@ -1478,6 +1478,7 @@ namespace OlyDrugstorePOS
 
         private void RefreshAll()
         {
+            store.ReloadIfChanged();
             RefreshProducts();
             RefreshCart();
             RefreshCash();
@@ -1572,15 +1573,17 @@ namespace OlyDrugstorePOS
 
             string query = searchTextBox == null ? "" : searchTextBox.Text.Trim();
             string normalizedQuery = query.ToLowerInvariant();
-            List<Product> products = store.Database.Products
+            List<Product> storeProducts = store.Database.Products
                 .Where(p => p.StoreId == activeStoreId)
+                .OrderBy(p => p.Name)
+                .ToList();
+            List<Product> products = storeProducts
                 .Where(p => activeCategory == "All" || p.Category == activeCategory)
                 .Where(p => searchTextBox == null ||
                             string.IsNullOrEmpty(normalizedQuery) ||
                             p.Name.ToLowerInvariant().Contains(normalizedQuery) ||
                             p.Category.ToLowerInvariant().Contains(normalizedQuery) ||
                             (!string.IsNullOrEmpty(p.Barcode) && p.Barcode.Contains(query)))
-                .OrderBy(p => p.Name)
                 .ToList();
 
             if (productButtonsPanel != null)
@@ -1594,7 +1597,7 @@ namespace OlyDrugstorePOS
                 try
                 {
                     stockGrid.DataSource = null;
-                    stockGrid.DataSource = products.ToList();
+                    stockGrid.DataSource = storeProducts.ToList();
                     FormatProductsGrid(stockGrid, true);
                 }
                 finally

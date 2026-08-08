@@ -18,6 +18,7 @@ namespace OlyDrugstorePOS
         private readonly string dataDirectory;
         private readonly string dataPath;
         private readonly string backupDirectory;
+        private DateTime lastDataWriteUtc;
 
         public PosDatabase Database { get; private set; }
 
@@ -46,6 +47,10 @@ namespace OlyDrugstorePOS
                 if (EnsureStartupCatalog())
                 {
                     Save();
+                }
+                else
+                {
+                    UpdateDataTimestamp();
                 }
             }
             else
@@ -94,6 +99,40 @@ namespace OlyDrugstorePOS
             {
                 serializer.Serialize(stream, Database);
             }
+            UpdateDataTimestamp();
+        }
+
+        public bool ReloadIfChanged()
+        {
+            try
+            {
+                if (!File.Exists(dataPath))
+                {
+                    return false;
+                }
+
+                DateTime currentWriteUtc = File.GetLastWriteTimeUtc(dataPath);
+                if (currentWriteUtc == lastDataWriteUtc)
+                {
+                    return false;
+                }
+
+                Load();
+                return true;
+            }
+            catch (IOException)
+            {
+                return false;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return false;
+            }
+        }
+
+        private void UpdateDataTimestamp()
+        {
+            lastDataWriteUtc = File.Exists(dataPath) ? File.GetLastWriteTimeUtc(dataPath) : DateTime.MinValue;
         }
 
         public string Backup()
