@@ -69,6 +69,13 @@ The first version targets old store computers and peripherals:
 
 ![Advanced reports](docs/images/reports.png)
 
+## Project Credit
+
+Created by Mohamed Aziz Kocht.
+
+Financial advice, ABC stock strategy input, and business workflow feedback:
+[Oumayma Bouchnak](https://www.linkedin.com/in/oumayma-bouchnak-97463b281).
+
 ## Default Demo Logins
 
 ```text
