@@ -24,6 +24,7 @@ The first version targets old store computers and peripherals:
 - Employee and normal discounts
 - Returns/refunds record
 - Customer debt record
+- Cashier debt payment and paid/unpaid tracking
 - Sales history with receipt preview and reprint
 - Cash register sessions
 - 200 DT fixed opening/remaining cash fund
@@ -33,7 +34,7 @@ The first version targets old store computers and peripherals:
 - ABC stock strategy recommendations
 - Admin action to apply ABC minimum stock levels
 - Advanced admin reports for revenue, profit, margin, stock value, cashier performance, payment totals, and category totals
-- Admin debt management with paid/unpaid tracking
+- Debt management with paid/unpaid tracking for cashiers and admins
 - Admin low-stock and expiry alert tables
 - Stock movement history for sales, returns, edits, and purchases
 - Supplier purchase/restock workflow
@@ -45,6 +46,28 @@ The first version targets old store computers and peripherals:
 - Hashed stored passwords
 - Backup when closing shift
 - Bilingual FR/EN labels
+
+## Screenshots
+
+### Cashier sales screen
+
+![Cashier sales screen](docs/images/cashier.png)
+
+### Admin stock screen
+
+![Admin stock screen](docs/images/admin.png)
+
+### ABC stock strategy report
+
+![ABC stock strategy report](docs/images/stock-strategy.png)
+
+### Sales history
+
+![Sales history](docs/images/history.png)
+
+### Advanced reports
+
+![Advanced reports](docs/images/reports.png)
 
 ## Default Demo Logins
 
