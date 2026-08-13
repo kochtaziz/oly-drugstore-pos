@@ -23,6 +23,10 @@ namespace OlyDrugstorePOS
         private string activeStoreId = "STORE-1";
 
         private TabControl tabs;
+        private TableLayoutPanel topBar;
+        private Panel brandPanel;
+        private Panel statusPanel;
+        private Panel storeAccentStrip;
         private ComboBox storeComboBox;
         private ComboBox languageComboBox;
         private TextBox searchTextBox;
@@ -170,6 +174,7 @@ namespace OlyDrugstorePOS
         private Control BuildTopBar()
         {
             TableLayoutPanel top = new TableLayoutPanel();
+            topBar = top;
             top.Dock = DockStyle.Top;
             top.Height = 96;
             top.BackColor = UiTheme.Primary;
@@ -182,15 +187,24 @@ namespace OlyDrugstorePOS
             top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
             Panel brand = new Panel();
+            brandPanel = brand;
             brand.Dock = DockStyle.Fill;
             brand.BackColor = UiTheme.Primary;
             top.Controls.Add(brand, 0, 0);
+
+            storeAccentStrip = new Panel();
+            storeAccentStrip.Left = 0;
+            storeAccentStrip.Top = 0;
+            storeAccentStrip.Width = 8;
+            storeAccentStrip.Height = 68;
+            storeAccentStrip.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            brand.Controls.Add(storeAccentStrip);
 
             Label logo = new Label();
             logo.Text = "OLY Drugstore POS";
             logo.ForeColor = Color.White;
             logo.Font = new Font("Segoe UI", 20, FontStyle.Bold);
-            logo.Left = 0;
+            logo.Left = 18;
             logo.Top = 4;
             logo.Width = 360;
             logo.Height = 36;
@@ -199,9 +213,9 @@ namespace OlyDrugstorePOS
 
             Label userLabel = new Label();
             userLabel.Text = user.FullName + "  |  " + user.Role;
-            userLabel.ForeColor = Color.FromArgb(196, 211, 229);
+            userLabel.ForeColor = Color.FromArgb(232, 232, 224);
             userLabel.Font = UiTheme.FontSmall;
-            userLabel.Left = 2;
+            userLabel.Left = 20;
             userLabel.Top = 46;
             userLabel.Width = 360;
             userLabel.Height = 22;
@@ -223,6 +237,7 @@ namespace OlyDrugstorePOS
             storeComboBox.SelectedIndexChanged += delegate
             {
                 activeStoreId = store.Database.Stores[storeComboBox.SelectedIndex].Id;
+                ApplyStoreBranding();
                 RefreshAll();
             };
             top.Controls.Add(storeComboBox, 1, 0);
@@ -244,6 +259,7 @@ namespace OlyDrugstorePOS
             top.Controls.Add(languageComboBox, 2, 0);
 
             Panel statusPanel = new Panel();
+            this.statusPanel = statusPanel;
             statusPanel.Dock = DockStyle.Fill;
             statusPanel.BackColor = UiTheme.Primary;
             top.Controls.Add(statusPanel, 3, 0);
@@ -283,7 +299,7 @@ namespace OlyDrugstorePOS
             };
 
             sessionSummaryLabel = new Label();
-            sessionSummaryLabel.ForeColor = Color.FromArgb(240, 253, 244);
+            sessionSummaryLabel.ForeColor = Color.FromArgb(255, 247, 214);
             sessionSummaryLabel.Font = UiTheme.FontBold;
             sessionSummaryLabel.TextAlign = ContentAlignment.MiddleRight;
             sessionSummaryLabel.Left = 0;
@@ -292,8 +308,32 @@ namespace OlyDrugstorePOS
             sessionSummaryLabel.Height = 32;
             sessionSummaryLabel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             statusPanel.Controls.Add(sessionSummaryLabel);
+            ApplyStoreBranding();
 
             return top;
+        }
+
+        private Color ActiveStoreAccent()
+        {
+            return activeStoreId == "STORE-2" ? UiTheme.StorePurple : UiTheme.StoreYellow;
+        }
+
+        private void ApplyStoreBranding()
+        {
+            Color accent = ActiveStoreAccent();
+            if (storeAccentStrip != null)
+            {
+                storeAccentStrip.BackColor = accent;
+            }
+            if (storeComboBox != null)
+            {
+                storeComboBox.FlatStyle = FlatStyle.Flat;
+            }
+            if (alertNotificationButton != null)
+            {
+                alertNotificationButton.FlatAppearance.BorderColor = accent;
+            }
+            Invalidate();
         }
 
         private void DrawMainTab(object sender, DrawItemEventArgs e)
@@ -623,7 +663,7 @@ namespace OlyDrugstorePOS
             totalLabel.Height = 36;
             totalLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             totalLabel.Font = new Font("Segoe UI", 20, FontStyle.Bold);
-            totalLabel.ForeColor = UiTheme.Accent;
+            totalLabel.ForeColor = UiTheme.Primary;
             checkoutCard.Controls.Add(totalLabel);
 
             Button checkoutButton = UiTheme.PrimaryButton(Localization.T("Checkout"));

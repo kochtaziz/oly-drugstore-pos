@@ -100,17 +100,20 @@ namespace OlyDrugstorePOS
 
     public static class UiTheme
     {
-        public static readonly Color Background = Color.FromArgb(245, 247, 251);
+        public static readonly Color Background = Color.FromArgb(247, 247, 244);
         public static readonly Color Card = Color.White;
-        public static readonly Color CardAlt = Color.FromArgb(248, 250, 252);
-        public static readonly Color Primary = Color.FromArgb(12, 18, 32);
-        public static readonly Color PrimarySoft = Color.FromArgb(30, 41, 59);
-        public static readonly Color Accent = Color.FromArgb(22, 121, 70);
-        public static readonly Color AccentHover = Color.FromArgb(18, 101, 58);
-        public static readonly Color AccentSoft = Color.FromArgb(225, 249, 235);
+        public static readonly Color CardAlt = Color.FromArgb(250, 250, 247);
+        public static readonly Color Primary = Color.FromArgb(17, 17, 17);
+        public static readonly Color PrimarySoft = Color.FromArgb(42, 42, 42);
+        public static readonly Color Accent = Color.FromArgb(245, 184, 0);
+        public static readonly Color AccentHover = Color.FromArgb(215, 157, 0);
+        public static readonly Color AccentSoft = Color.FromArgb(255, 247, 214);
+        public static readonly Color StoreYellow = Color.FromArgb(255, 210, 31);
+        public static readonly Color StorePurple = Color.FromArgb(124, 58, 237);
+        public static readonly Color Success = Color.FromArgb(21, 128, 61);
         public static readonly Color Muted = Color.FromArgb(100, 116, 139);
-        public static readonly Color Border = Color.FromArgb(218, 226, 236);
-        public static readonly Color BorderStrong = Color.FromArgb(188, 199, 213);
+        public static readonly Color Border = Color.FromArgb(226, 226, 218);
+        public static readonly Color BorderStrong = Color.FromArgb(199, 199, 188);
         public static readonly Color Text = Color.FromArgb(17, 24, 39);
         public static readonly Color DangerSoft = Color.FromArgb(255, 247, 237);
 
@@ -161,9 +164,9 @@ namespace OlyDrugstorePOS
             button.Text = text;
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderSize = 0;
-            button.NormalBackColor = Accent;
-            button.HoverBackColor = AccentHover;
-            button.PressedBackColor = Color.FromArgb(13, 84, 46);
+            button.NormalBackColor = Primary;
+            button.HoverBackColor = PrimarySoft;
+            button.PressedBackColor = Color.Black;
             button.ForeColor = Color.White;
             button.Font = FontBold;
             button.Cursor = Cursors.Hand;
@@ -206,7 +209,7 @@ namespace OlyDrugstorePOS
             grid.EnableHeadersVisualStyles = false;
             grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
             grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(236, 241, 247);
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(241, 241, 234);
             grid.ColumnHeadersDefaultCellStyle.ForeColor = Text;
             grid.ColumnHeadersDefaultCellStyle.Font = FontBold;
             grid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
