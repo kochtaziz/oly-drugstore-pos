@@ -125,6 +125,8 @@ namespace OlyDrugstorePOS
             Fr["Category"] = "Categorie";
             Fr["CategoryShort"] = "Cat";
             Fr["Barcode"] = "Code a barres";
+            Fr["ProductImage"] = "Image produit";
+            Fr["ChooseImage"] = "Choisir image";
             Fr["PurchasePrice"] = "Prix d'achat";
             Fr["SalePrice"] = "Prix de vente";
             Fr["Tax"] = "Taxe";
@@ -300,6 +302,8 @@ namespace OlyDrugstorePOS
             En["Category"] = "Category";
             En["CategoryShort"] = "Cat";
             En["Barcode"] = "Barcode";
+            En["ProductImage"] = "Product image";
+            En["ChooseImage"] = "Choose image";
             En["PurchasePrice"] = "Purchase price";
             En["SalePrice"] = "Sale price";
             En["Tax"] = "Tax";

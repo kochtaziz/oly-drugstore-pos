@@ -37,6 +37,7 @@ namespace OlyDrugstorePOS
         public int MinimumQuantity { get; set; }
         public DateTime ExpiryDate { get; set; }
         public string StoreId { get; set; }
+        public string ImagePath { get; set; }
     }
 
     public class SaleItem

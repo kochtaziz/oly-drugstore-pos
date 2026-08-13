@@ -67,6 +67,7 @@ namespace OlyDrugstorePOS
         private TextBox productNameInput;
         private TextBox productCategoryInput;
         private TextBox barcodeInput;
+        private TextBox productImageInput;
         private NumericUpDown purchasePriceInput;
         private NumericUpDown salePriceInput;
         private NumericUpDown taxInput;
@@ -684,25 +685,35 @@ namespace OlyDrugstorePOS
             productNameInput = AddTextField(form, "productNameLabel", 22, 76, 410);
             productCategoryInput = AddTextField(form, "productCategoryLabel", 22, 142, 410);
             barcodeInput = AddTextField(form, "barcodeLabel", 22, 208, 410);
-            purchasePriceInput = AddMoneyField(form, "purchaseLabel", 22, 274, 185);
-            salePriceInput = AddMoneyField(form, "salePriceLabel", 245, 274, 185);
-            taxInput = AddMoneyField(form, "taxLabel", 22, 340, 125);
-            quantityInput = AddNumberField(form, "quantityLabel", 170, 340, 125);
-            minimumInput = AddNumberField(form, "minimumLabel", 318, 340, 125);
+            productImageInput = AddTextField(form, "productImageLabel", 22, 274, 285);
+            Button chooseImage = UiTheme.SecondaryButton(Localization.T("ChooseImage"));
+            chooseImage.Name = "chooseImageButton";
+            chooseImage.Left = 318;
+            chooseImage.Top = 274;
+            chooseImage.Width = 125;
+            chooseImage.Height = 46;
+            chooseImage.Click += delegate { ChooseProductImage(); };
+            form.Controls.Add(chooseImage);
 
-            AddLabel(form, "expiryLabel", Localization.T("Expiry"), 22, 406);
+            purchasePriceInput = AddMoneyField(form, "purchaseLabel", 22, 340, 185);
+            salePriceInput = AddMoneyField(form, "salePriceLabel", 245, 340, 185);
+            taxInput = AddMoneyField(form, "taxLabel", 22, 406, 125);
+            quantityInput = AddNumberField(form, "quantityLabel", 170, 406, 125);
+            minimumInput = AddNumberField(form, "minimumLabel", 318, 406, 125);
+
+            AddLabel(form, "expiryLabel", Localization.T("Expiry"), 22, 472);
             expiryInput = new DateTimePicker();
             expiryInput.Left = 22;
-            expiryInput.Top = 432;
+            expiryInput.Top = 498;
             expiryInput.Width = 160;
             expiryInput.Format = DateTimePickerFormat.Short;
             form.Controls.Add(expiryInput);
 
-            AddLabel(form, "storeFieldLabel", Localization.T("Store"), 245, 406);
+            AddLabel(form, "storeFieldLabel", Localization.T("Store"), 245, 472);
             productStoreInput = new ComboBox();
             productStoreInput.DropDownStyle = ComboBoxStyle.DropDownList;
             productStoreInput.Left = 245;
-            productStoreInput.Top = 432;
+            productStoreInput.Top = 498;
             productStoreInput.Width = 198;
             foreach (Store item in store.Database.Stores) productStoreInput.Items.Add(item.Id);
             productStoreInput.SelectedIndex = 0;
@@ -711,7 +722,7 @@ namespace OlyDrugstorePOS
             Button save = UiTheme.PrimaryButton(Localization.T("SaveProduct"));
             save.Name = "saveProductButton";
             save.Left = 22;
-            save.Top = 486;
+            save.Top = 552;
             save.Width = 175;
             save.Height = 46;
             save.Click += delegate { SaveProduct(); };
@@ -720,7 +731,7 @@ namespace OlyDrugstorePOS
             Button delete = UiTheme.SecondaryButton(Localization.T("DeleteProduct"));
             delete.Name = "deleteProductButton";
             delete.Left = 220;
-            delete.Top = 486;
+            delete.Top = 552;
             delete.Width = 175;
             delete.Height = 46;
             delete.Click += delegate { DeleteSelectedProduct(); };
@@ -1470,6 +1481,8 @@ namespace OlyDrugstorePOS
             SetText("productNameLabel", Localization.T("Name"));
             SetText("productCategoryLabel", Localization.T("Category"));
             SetText("barcodeLabel", Localization.T("Barcode"));
+            SetText("productImageLabel", Localization.T("ProductImage"));
+            SetText("chooseImageButton", Localization.T("ChooseImage"));
             SetText("purchaseLabel", Localization.T("PurchasePrice"));
             SetText("salePriceLabel", Localization.T("SalePrice"));
             SetText("taxLabel", Localization.T("Tax"));
@@ -2312,21 +2325,32 @@ namespace OlyDrugstorePOS
             MoveLabel("productNameLabel", formPad, 76, contentWidth);
             MoveLabel("productCategoryLabel", formPad, 142, contentWidth);
             MoveLabel("barcodeLabel", formPad, 208, contentWidth);
+            MoveLabel("productImageLabel", formPad, 274, contentWidth);
+            Control chooseImageButton = FindNamedControl(form, "chooseImageButton");
+            int imageButtonWidth = Math.Min(132, Math.Max(104, contentWidth / 3));
+            productImageInput.Left = formPad;
+            productImageInput.Width = Math.Max(120, contentWidth - imageButtonWidth - 12);
+            if (chooseImageButton != null)
+            {
+                chooseImageButton.Left = formPad + productImageInput.Width + 12;
+                chooseImageButton.Top = 274;
+                chooseImageButton.Width = imageButtonWidth;
+            }
 
             int twoColumnWidth = Math.Max(118, (contentWidth - 16) / 2);
-            LayoutField(form, "purchaseLabel", purchasePriceInput, formPad, 274, twoColumnWidth);
-            LayoutField(form, "salePriceLabel", salePriceInput, formPad + twoColumnWidth + 16, 274, twoColumnWidth);
+            LayoutField(form, "purchaseLabel", purchasePriceInput, formPad, 340, twoColumnWidth);
+            LayoutField(form, "salePriceLabel", salePriceInput, formPad + twoColumnWidth + 16, 340, twoColumnWidth);
 
             int threeColumnWidth = Math.Max(82, (contentWidth - 24) / 3);
-            LayoutField(form, "taxLabel", taxInput, formPad, 340, threeColumnWidth);
-            LayoutField(form, "quantityLabel", quantityInput, formPad + threeColumnWidth + 12, 340, threeColumnWidth);
-            LayoutField(form, "minimumLabel", minimumInput, formPad + ((threeColumnWidth + 12) * 2), 340, threeColumnWidth);
+            LayoutField(form, "taxLabel", taxInput, formPad, 406, threeColumnWidth);
+            LayoutField(form, "quantityLabel", quantityInput, formPad + threeColumnWidth + 12, 406, threeColumnWidth);
+            LayoutField(form, "minimumLabel", minimumInput, formPad + ((threeColumnWidth + 12) * 2), 406, threeColumnWidth);
 
             int bottomWidth = Math.Max(120, (contentWidth - 16) / 2);
-            MoveLabel("expiryLabel", formPad, 406, bottomWidth);
+            MoveLabel("expiryLabel", formPad, 472, bottomWidth);
             expiryInput.Left = formPad;
             expiryInput.Width = bottomWidth;
-            MoveLabel("storeFieldLabel", formPad + bottomWidth + 16, 406, bottomWidth);
+            MoveLabel("storeFieldLabel", formPad + bottomWidth + 16, 472, bottomWidth);
             productStoreInput.Left = formPad + bottomWidth + 16;
             productStoreInput.Width = bottomWidth;
 
@@ -2337,8 +2361,10 @@ namespace OlyDrugstorePOS
                 int buttonWidth = Math.Max(120, (contentWidth - 16) / 2);
                 saveButton.Left = formPad;
                 saveButton.Width = buttonWidth;
+                saveButton.Top = 552;
                 deleteButton.Left = formPad + buttonWidth + 16;
                 deleteButton.Width = buttonWidth;
+                deleteButton.Top = 552;
             }
         }
 
@@ -3490,10 +3516,10 @@ namespace OlyDrugstorePOS
         private void ExportProductsCsv()
         {
             StringBuilder builder = new StringBuilder();
-            builder.AppendLine("Store,Category,Name,Barcode,PurchasePrice,SalePrice,Tax,Quantity,Minimum,Expiry");
+            builder.AppendLine("Store,Category,Name,Barcode,PurchasePrice,SalePrice,Tax,Quantity,Minimum,Expiry,ImagePath");
             foreach (Product p in store.Database.Products.Where(p => p.StoreId == activeStoreId).OrderBy(p => p.Category).ThenBy(p => p.Name))
             {
-                builder.AppendLine(activeStoreId + "," + Csv(p.Category) + "," + Csv(p.Name) + "," + Csv(p.Barcode) + "," + p.PurchasePrice + "," + p.SalePrice + "," + p.TaxRate + "," + p.Quantity + "," + p.MinimumQuantity + "," + p.ExpiryDate.ToShortDateString());
+                builder.AppendLine(activeStoreId + "," + Csv(p.Category) + "," + Csv(p.Name) + "," + Csv(p.Barcode) + "," + p.PurchasePrice + "," + p.SalePrice + "," + p.TaxRate + "," + p.Quantity + "," + p.MinimumQuantity + "," + p.ExpiryDate.ToShortDateString() + "," + Csv(p.ImagePath));
             }
             string path = store.ExportCsv("products-" + activeStoreId + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".csv", builder.ToString());
             MessageBox.Show(path);
@@ -3521,6 +3547,14 @@ namespace OlyDrugstorePOS
             MessageBox.Show(count + " products imported/updated.");
         }
 
+        private void ChooseProductImage()
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Filter = "Image files (*.png;*.jpg;*.jpeg;*.webp;*.bmp)|*.png;*.jpg;*.jpeg;*.webp;*.bmp|All files (*.*)|*.*";
+            if (dialog.ShowDialog() != DialogResult.OK) return;
+            productImageInput.Text = dialog.FileName;
+        }
+
         private string Csv(string value)
         {
             value = value ?? "";
@@ -3536,6 +3570,7 @@ namespace OlyDrugstorePOS
             productNameInput.Text = selectedProduct.Name;
             productCategoryInput.Text = selectedProduct.Category;
             barcodeInput.Text = selectedProduct.Barcode;
+            productImageInput.Text = selectedProduct.ImagePath ?? "";
             purchasePriceInput.Value = selectedProduct.PurchasePrice;
             salePriceInput.Value = selectedProduct.SalePrice;
             taxInput.Value = selectedProduct.TaxRate;
@@ -3552,6 +3587,7 @@ namespace OlyDrugstorePOS
             product.Name = productNameInput.Text.Trim();
             product.Category = productCategoryInput.Text.Trim();
             product.Barcode = barcodeInput.Text.Trim();
+            product.ImagePath = productImageInput.Text.Trim();
             product.PurchasePrice = purchasePriceInput.Value;
             product.SalePrice = salePriceInput.Value;
             product.TaxRate = taxInput.Value;
@@ -3602,6 +3638,7 @@ namespace OlyDrugstorePOS
             productNameInput.Text = "";
             productCategoryInput.Text = "";
             barcodeInput.Text = "";
+            productImageInput.Text = "";
             purchasePriceInput.Value = 0;
             salePriceInput.Value = 0;
             taxInput.Value = 0;
@@ -3719,6 +3756,7 @@ namespace OlyDrugstorePOS
         {
             HideColumn(grid, "Id");
             HideColumn(grid, "StoreId");
+            HideColumn(grid, "ImagePath");
             if (adminView)
             {
                 HideColumn(grid, "Barcode");

@@ -496,7 +496,7 @@ namespace OlyDrugstorePOS
                         cells[column] = CellText(cell, sharedStrings, ns);
                     }
 
-                    string[] parts = new string[10];
+                    string[] parts = new string[11];
                     for (int i = 0; i < parts.Length; i++)
                     {
                         parts[i] = cells.ContainsKey(i) ? cells[i] : "";
@@ -536,6 +536,7 @@ namespace OlyDrugstorePOS
             product.MinimumQuantity = ParseInt(parts[8]);
             DateTime expiry;
             product.ExpiryDate = parts.Length > 9 && DateTime.TryParse(parts[9], out expiry) ? expiry : DateTime.Today.AddMonths(12);
+            product.ImagePath = parts.Length > 10 ? parts[10] : product.ImagePath;
             SaveProduct(product, username, reason, oldQuantity);
             return true;
         }
