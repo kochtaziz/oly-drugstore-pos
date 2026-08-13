@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -339,6 +340,85 @@ namespace OlyDrugstorePOS
                 }
             }
             Save();
+            TrySyncProductToBackend(product);
+        }
+
+        private void TrySyncProductToBackend(Product product)
+        {
+            try
+            {
+                string apiUrl = Environment.GetEnvironmentVariable("OLY_API_URL");
+                if (string.IsNullOrWhiteSpace(apiUrl))
+                {
+                    apiUrl = "http://localhost:4000";
+                }
+
+                string endpoint = apiUrl.TrimEnd('/') + "/api/products";
+                string storeId = product.StoreId == "STORE-2" ? "tunis" : "bizerte";
+                string imageUrl = "";
+                if (!string.IsNullOrWhiteSpace(product.ImagePath) &&
+                    (product.ImagePath.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+                     product.ImagePath.StartsWith("products/", StringComparison.OrdinalIgnoreCase)))
+                {
+                    imageUrl = product.ImagePath;
+                }
+
+                string json =
+                    "{" +
+                    "\"id\":\"" + JsonEscape(!string.IsNullOrWhiteSpace(product.Barcode) ? product.Barcode : product.Id.ToString()) + "\"," +
+                    "\"name\":\"" + JsonEscape(product.Name) + "\"," +
+                    "\"category\":\"" + JsonEscape(product.Category) + "\"," +
+                    "\"barcode\":\"" + JsonEscape(product.Barcode) + "\"," +
+                    "\"salePrice\":" + product.SalePrice.ToString(CultureInfo.InvariantCulture) + "," +
+                    "\"quantity\":" + product.Quantity.ToString(CultureInfo.InvariantCulture) + "," +
+                    "\"storeId\":\"" + storeId + "\"," +
+                    "\"image\":\"" + JsonEscape(Initials(product.Name)) + "\"," +
+                    "\"imageUrl\":\"" + JsonEscape(imageUrl) + "\"" +
+                    "}";
+
+                byte[] payload = Encoding.UTF8.GetBytes(json);
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(endpoint);
+                request.Method = "POST";
+                request.Timeout = 900;
+                request.ContentType = "application/json";
+                request.ContentLength = payload.Length;
+
+                string apiKey = Environment.GetEnvironmentVariable("OLY_API_KEY");
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                {
+                    request.Headers["X-API-Key"] = apiKey;
+                }
+
+                using (Stream stream = request.GetRequestStream())
+                {
+                    stream.Write(payload, 0, payload.Length);
+                }
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                {
+                }
+            }
+            catch
+            {
+                // Local POS must continue working even when the online API is unavailable.
+            }
+        }
+
+        private string Initials(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return "PR";
+            string[] words = value.Split(new[] { ' ', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length == 1) return words[0].Substring(0, Math.Min(2, words[0].Length)).ToUpperInvariant();
+            return (words[0].Substring(0, 1) + words[1].Substring(0, 1)).ToUpperInvariant();
+        }
+
+        private string JsonEscape(string value)
+        {
+            if (value == null) return "";
+            return value
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n");
         }
 
         public bool BarcodeExists(Product product)
