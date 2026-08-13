@@ -72,6 +72,7 @@ namespace OlyDrugstorePOS
             if (Database.CashSessions == null) Database.CashSessions = new List<CashSession>();
             if (Database.StockMovements == null) Database.StockMovements = new List<StockMovement>();
             if (Database.SupplierPurchases == null) Database.SupplierPurchases = new List<SupplierPurchase>();
+            if (Database.OnlineOrders == null) Database.OnlineOrders = new List<OnlineOrder>();
             if (Database.NextProductId <= 0) Database.NextProductId = NextId(Database.Products.Select(p => p.Id));
             if (Database.NextSaleId <= 0) Database.NextSaleId = NextId(Database.Sales.Select(s => s.Id));
             if (Database.NextCashSessionId <= 0) Database.NextCashSessionId = NextId(Database.CashSessions.Select(s => s.Id));
@@ -343,6 +344,101 @@ namespace OlyDrugstorePOS
             TrySyncProductToBackend(product);
         }
 
+        public int PullOnlineOrders(string storeId)
+        {
+            try
+            {
+                string apiUrl = Environment.GetEnvironmentVariable("OLY_API_URL");
+                if (string.IsNullOrWhiteSpace(apiUrl))
+                {
+                    apiUrl = "http://localhost:4000";
+                }
+
+                string endpoint = apiUrl.TrimEnd('/') + "/api/orders.csv?storeId=" + Uri.EscapeDataString(storeId);
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(endpoint);
+                request.Method = "GET";
+                request.Timeout = 1200;
+
+                string apiKey = Environment.GetEnvironmentVariable("OLY_API_KEY");
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                {
+                    request.Headers["X-API-Key"] = apiKey;
+                }
+
+                string csv;
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                using (StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+                {
+                    csv = reader.ReadToEnd();
+                }
+
+                List<OnlineOrder> pulled = ParseOnlineOrdersCsv(csv);
+                int changed = 0;
+                foreach (OnlineOrder order in pulled)
+                {
+                    OnlineOrder existing = Database.OnlineOrders.FirstOrDefault(o => o.Id == order.Id);
+                    if (existing == null)
+                    {
+                        Database.OnlineOrders.Add(order);
+                        changed++;
+                    }
+                    else
+                    {
+                        existing.CreatedAt = order.CreatedAt;
+                        existing.StoreId = order.StoreId;
+                        existing.Status = order.Status;
+                        existing.CustomerName = order.CustomerName;
+                        existing.Phone = order.Phone;
+                        existing.City = order.City;
+                        existing.Total = order.Total;
+                        existing.Payment = order.Payment;
+                        existing.Delivery = order.Delivery;
+                        existing.Items = order.Items;
+                    }
+                }
+                if (changed > 0) Save();
+                return changed;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        private List<OnlineOrder> ParseOnlineOrdersCsv(string csv)
+        {
+            List<OnlineOrder> orders = new List<OnlineOrder>();
+            if (string.IsNullOrWhiteSpace(csv)) return orders;
+            string[] lines = csv.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 1; i < lines.Length; i++)
+            {
+                string[] parts = lines[i].Split('\t');
+                if (parts.Length < 11) continue;
+                DateTime createdAt;
+                if (!DateTime.TryParse(parts[1], CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out createdAt))
+                {
+                    createdAt = DateTime.Now;
+                }
+                decimal total;
+                decimal.TryParse(parts[7], NumberStyles.Any, CultureInfo.InvariantCulture, out total);
+                orders.Add(new OnlineOrder
+                {
+                    Id = parts[0],
+                    CreatedAt = createdAt,
+                    StoreId = parts[2] == "tunis" ? "STORE-2" : "STORE-1",
+                    Status = parts[3],
+                    CustomerName = parts[4],
+                    Phone = parts[5],
+                    City = parts[6],
+                    Total = total,
+                    Payment = parts[8],
+                    Delivery = parts[9],
+                    Items = parts[10],
+                });
+            }
+            return orders;
+        }
+
         private void TrySyncProductToBackend(Product product)
         {
             try
@@ -362,6 +458,15 @@ namespace OlyDrugstorePOS
                 {
                     imageUrl = product.ImagePath;
                 }
+                string imageBase64 = "";
+                string imageExtension = "";
+                if (!string.IsNullOrWhiteSpace(product.ImagePath) &&
+                    File.Exists(product.ImagePath) &&
+                    new FileInfo(product.ImagePath).Length < 5000000)
+                {
+                    imageBase64 = Convert.ToBase64String(File.ReadAllBytes(product.ImagePath));
+                    imageExtension = Path.GetExtension(product.ImagePath);
+                }
 
                 string json =
                     "{" +
@@ -373,7 +478,9 @@ namespace OlyDrugstorePOS
                     "\"quantity\":" + product.Quantity.ToString(CultureInfo.InvariantCulture) + "," +
                     "\"storeId\":\"" + storeId + "\"," +
                     "\"image\":\"" + JsonEscape(Initials(product.Name)) + "\"," +
-                    "\"imageUrl\":\"" + JsonEscape(imageUrl) + "\"" +
+                    "\"imageUrl\":\"" + JsonEscape(imageUrl) + "\"," +
+                    "\"imageBase64\":\"" + JsonEscape(imageBase64) + "\"," +
+                    "\"imageExtension\":\"" + JsonEscape(imageExtension) + "\"" +
                     "}";
 
                 byte[] payload = Encoding.UTF8.GetBytes(json);

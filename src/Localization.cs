@@ -150,6 +150,11 @@ namespace OlyDrugstorePOS
             Fr["Return"] = "Retour";
             Fr["Debt"] = "Dette client";
             Fr["Customer"] = "Client";
+            Fr["Phone"] = "Telephone";
+            Fr["City"] = "Ville";
+            Fr["OnlineOrders"] = "Commandes en ligne";
+            Fr["RefreshOnlineOrders"] = "Actualiser commandes";
+            Fr["OrderDetails"] = "Details commande";
             Fr["LowStock"] = "Stock faible";
             Fr["BackupDone"] = "Sauvegarde effectuee";
             Fr["Debts"] = "Dettes";
@@ -327,6 +332,11 @@ namespace OlyDrugstorePOS
             En["Return"] = "Return";
             En["Debt"] = "Customer debt";
             En["Customer"] = "Customer";
+            En["Phone"] = "Phone";
+            En["City"] = "City";
+            En["OnlineOrders"] = "Online orders";
+            En["RefreshOnlineOrders"] = "Refresh orders";
+            En["OrderDetails"] = "Order details";
             En["LowStock"] = "Low stock";
             En["BackupDone"] = "Backup completed";
             En["Debts"] = "Debts";

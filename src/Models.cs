@@ -152,6 +152,21 @@ namespace OlyDrugstorePOS
         public string Username { get; set; }
     }
 
+    public class OnlineOrder
+    {
+        public string Id { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string StoreId { get; set; }
+        public string Status { get; set; }
+        public string CustomerName { get; set; }
+        public string Phone { get; set; }
+        public string City { get; set; }
+        public decimal Total { get; set; }
+        public string Payment { get; set; }
+        public string Delivery { get; set; }
+        public string Items { get; set; }
+    }
+
     public class PosDatabase
     {
         public List<User> Users { get; set; }
@@ -161,6 +176,7 @@ namespace OlyDrugstorePOS
         public List<CashSession> CashSessions { get; set; }
         public List<StockMovement> StockMovements { get; set; }
         public List<SupplierPurchase> SupplierPurchases { get; set; }
+        public List<OnlineOrder> OnlineOrders { get; set; }
         public int NextProductId { get; set; }
         public int NextSaleId { get; set; }
         public int NextCashSessionId { get; set; }
@@ -177,6 +193,7 @@ namespace OlyDrugstorePOS
             CashSessions = new List<CashSession>();
             StockMovements = new List<StockMovement>();
             SupplierPurchases = new List<SupplierPurchase>();
+            OnlineOrders = new List<OnlineOrder>();
             NextProductId = 1;
             NextSaleId = 1;
             NextCashSessionId = 1;

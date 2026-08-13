@@ -95,6 +95,8 @@ namespace OlyDrugstorePOS
         private TextBox categoryStrategyTextBox;
         private TabControl adminTabs;
         private DataGridView debtGrid;
+        private DataGridView onlineOrdersGrid;
+        private TextBox onlineOrderDetailsTextBox;
         private DataGridView alertGrid;
         private DataGridView stockMovementGrid;
         private DataGridView usersGrid;
@@ -153,6 +155,7 @@ namespace OlyDrugstorePOS
             else
             {
                 BuildSalesTab();
+                BuildOnlineOrdersTab();
                 BuildCashTab();
                 BuildCashierDebtsTab();
                 BuildSalesHistoryTab();
@@ -1008,6 +1011,7 @@ namespace OlyDrugstorePOS
             tab.Controls.Add(adminTabs);
 
             BuildDebtAdminPage(adminTabs);
+            BuildOnlineOrdersAdminPage(adminTabs);
             BuildAlertsAdminPage(adminTabs);
             BuildStockLogAdminPage(adminTabs);
             BuildUsersAdminPage(adminTabs);
@@ -1020,6 +1024,75 @@ namespace OlyDrugstorePOS
         {
             TabPage tab = NewTab("debtsTab");
             BuildDebtPageContent(tab);
+        }
+
+        private void BuildOnlineOrdersTab()
+        {
+            TabPage tab = NewTab("onlineOrdersTab");
+            BuildOnlineOrdersContent(tab);
+        }
+
+        private void BuildOnlineOrdersAdminPage(TabControl owner)
+        {
+            TabPage page = InnerTab(owner, Localization.T("OnlineOrders"));
+            BuildOnlineOrdersContent(page);
+        }
+
+        private void BuildOnlineOrdersContent(Control page)
+        {
+            TableLayoutPanel shell = PageGrid(2, 1);
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62));
+            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38));
+            shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            page.Controls.Add(shell);
+
+            Panel listCard = UiTheme.CardPanel();
+            listCard.Dock = DockStyle.Fill;
+            listCard.Padding = new Padding(18);
+            shell.Controls.Add(listCard, 0, 0);
+            listCard.Controls.Add(CardTitle(Localization.T("OnlineOrders"), 18, 14));
+
+            Button refresh = UiTheme.PrimaryButton(Localization.T("RefreshOnlineOrders"));
+            refresh.Name = "refreshOnlineOrdersButton";
+            refresh.Left = 620;
+            refresh.Top = 18;
+            refresh.Width = 250;
+            refresh.Height = 48;
+            refresh.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            refresh.Click += delegate
+            {
+                store.PullOnlineOrders(activeStoreId);
+                RefreshOnlineOrders();
+            };
+            listCard.Controls.Add(refresh);
+
+            onlineOrdersGrid = UiTheme.Grid();
+            onlineOrdersGrid.Left = 18;
+            onlineOrdersGrid.Top = 78;
+            onlineOrdersGrid.Width = 850;
+            onlineOrdersGrid.Height = 520;
+            onlineOrdersGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            onlineOrdersGrid.CellClick += delegate { LoadSelectedOnlineOrder(); };
+            listCard.Controls.Add(onlineOrdersGrid);
+
+            Panel detailCard = UiTheme.CardPanel();
+            detailCard.Dock = DockStyle.Fill;
+            detailCard.Padding = new Padding(18);
+            shell.Controls.Add(detailCard, 1, 0);
+            detailCard.Controls.Add(CardTitle(Localization.T("OrderDetails"), 18, 14));
+
+            onlineOrderDetailsTextBox = new TextBox();
+            onlineOrderDetailsTextBox.Left = 18;
+            onlineOrderDetailsTextBox.Top = 78;
+            onlineOrderDetailsTextBox.Width = 420;
+            onlineOrderDetailsTextBox.Height = 520;
+            onlineOrderDetailsTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            onlineOrderDetailsTextBox.Multiline = true;
+            onlineOrderDetailsTextBox.ReadOnly = true;
+            onlineOrderDetailsTextBox.ScrollBars = ScrollBars.Vertical;
+            onlineOrderDetailsTextBox.Font = UiTheme.FontNormal;
+            onlineOrderDetailsTextBox.BackColor = Color.White;
+            detailCard.Controls.Add(onlineOrderDetailsTextBox);
         }
 
         private TabPage InnerTab(TabControl owner, string title)
@@ -1497,6 +1570,7 @@ namespace OlyDrugstorePOS
             if (tabs.TabPages.ContainsKey("salesTab")) tabs.TabPages["salesTab"].Text = Localization.T("Sales");
             if (tabs.TabPages.ContainsKey("productsTab")) tabs.TabPages["productsTab"].Text = Localization.T("Products");
             if (tabs.TabPages.ContainsKey("cashTab")) tabs.TabPages["cashTab"].Text = Localization.T("Cash");
+            if (tabs.TabPages.ContainsKey("onlineOrdersTab")) tabs.TabPages["onlineOrdersTab"].Text = Localization.T("OnlineOrders");
             if (tabs.TabPages.ContainsKey("debtsTab")) tabs.TabPages["debtsTab"].Text = Localization.T("Debts");
             if (tabs.TabPages.ContainsKey("historyTab")) tabs.TabPages["historyTab"].Text = Localization.T("History");
             if (tabs.TabPages.ContainsKey("stockStrategyTab")) tabs.TabPages["stockStrategyTab"].Text = Localization.T("Stock");
@@ -1546,6 +1620,7 @@ namespace OlyDrugstorePOS
             SetText("exportProductsButton", Localization.T("ExportProducts"));
             SetText("exportSalesButton", Localization.T("ExportSales"));
             SetText("importProductsButton", Localization.T("ImportProducts"));
+            SetText("refreshOnlineOrdersButton", Localization.T("RefreshOnlineOrders"));
             SetText("countedLabel", Localization.T("CountedCash"));
             SetText("managedUsernameLabel", Localization.T("Username"));
             SetText("managedPasswordLabel", Localization.T("Password"));
@@ -1587,6 +1662,7 @@ namespace OlyDrugstorePOS
             RefreshCash();
             RefreshUrgentNotification();
             RefreshSalesHistory();
+            RefreshOnlineOrders();
             RefreshStockStrategy();
             RefreshDebtGrid();
             RefreshAdminTools();
@@ -3248,6 +3324,56 @@ namespace OlyDrugstorePOS
             if (debtGrid.Columns.Contains("SaleId")) debtGrid.Columns["SaleId"].Visible = false;
         }
 
+        private void RefreshOnlineOrders()
+        {
+            if (onlineOrdersGrid == null) return;
+            var rows = store.Database.OnlineOrders
+                .Where(o => o.StoreId == activeStoreId)
+                .OrderByDescending(o => o.CreatedAt)
+                .Select(o => new OnlineOrderRow
+                {
+                    Id = o.Id,
+                    Date = o.CreatedAt.ToString("g"),
+                    Status = o.Status,
+                    Customer = o.CustomerName,
+                    Phone = o.Phone,
+                    City = o.City,
+                    Total = Money(o.Total),
+                    Payment = o.Payment,
+                    Delivery = o.Delivery
+                })
+                .ToList();
+            onlineOrdersGrid.DataSource = null;
+            onlineOrdersGrid.DataSource = rows;
+        }
+
+        private void LoadSelectedOnlineOrder()
+        {
+            if (onlineOrdersGrid == null || onlineOrdersGrid.CurrentRow == null || onlineOrderDetailsTextBox == null) return;
+            OnlineOrderRow row = onlineOrdersGrid.CurrentRow.DataBoundItem as OnlineOrderRow;
+            OnlineOrder order = row == null ? null : store.Database.OnlineOrders.FirstOrDefault(o => o.Id == row.Id);
+            if (order == null)
+            {
+                onlineOrderDetailsTextBox.Text = "";
+                return;
+            }
+
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine(Localization.T("OnlineOrders") + ": " + order.Id);
+            builder.AppendLine(Localization.T("Date") + ": " + order.CreatedAt.ToString("g"));
+            builder.AppendLine(Localization.T("Status") + ": " + order.Status);
+            builder.AppendLine(Localization.T("Customer") + ": " + order.CustomerName);
+            builder.AppendLine(Localization.T("Phone") + ": " + order.Phone);
+            builder.AppendLine(Localization.T("City") + ": " + order.City);
+            builder.AppendLine(Localization.T("Payment") + ": " + order.Payment);
+            builder.AppendLine(Localization.T("Delivery") + ": " + order.Delivery);
+            builder.AppendLine(Localization.T("Total") + ": " + Money(order.Total));
+            builder.AppendLine();
+            builder.AppendLine(Localization.T("Products"));
+            builder.AppendLine(order.Items);
+            onlineOrderDetailsTextBox.Text = builder.ToString();
+        }
+
         private void LoadSelectedDebt()
         {
             if (debtGrid == null || debtGrid.CurrentRow == null) return;
@@ -4243,6 +4369,19 @@ namespace OlyDrugstorePOS
             public string Total { get; set; }
             public string Status { get; set; }
             public string Customer { get; set; }
+        }
+
+        private class OnlineOrderRow
+        {
+            public string Id { get; set; }
+            public string Date { get; set; }
+            public string Status { get; set; }
+            public string Customer { get; set; }
+            public string Phone { get; set; }
+            public string City { get; set; }
+            public string Total { get; set; }
+            public string Payment { get; set; }
+            public string Delivery { get; set; }
         }
 
         private class ComboOption
