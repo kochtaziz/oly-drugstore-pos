@@ -826,6 +826,68 @@ namespace OlyDrugstorePOS
             changed |= AddSeedProduct("Briquet Lighter", "Tobacco", "619200009", 0.500m, 1.000m, 60, 15, 36, "STORE-2");
             changed |= AddSeedProduct("Phone Recharge Card 5 DT", "Services", "619200010", 4.800m, 5.000m, 40, 10, 36, "STORE-2");
 
+            changed |= AddSeedProduct("Milka Chocolate", "Chocolate", "619300001", 3.300m, 4.900m, 28, 6, 12, "STORE-1");
+            changed |= AddSeedProduct("Nutella 350g", "Spreads", "619300002", 9.800m, 13.500m, 16, 4, 12, "STORE-1");
+            changed |= AddSeedProduct("Angel Curls", "Snacks", "619300003", 1.650m, 2.500m, 34, 8, 10, "STORE-1");
+            changed |= AddSeedProduct("Swiss Chocolate", "Chocolate", "619300004", 3.700m, 5.500m, 20, 5, 12, "STORE-1");
+            changed |= AddSeedProduct("Kinder Bueno", "Chocolate", "619300005", 2.500m, 3.800m, 32, 8, 10, "STORE-1");
+            changed |= AddSeedProduct("Oreo Original", "Biscuits", "619300006", 2.100m, 3.200m, 36, 8, 10, "STORE-1");
+            changed |= AddSeedProduct("Twix", "Chocolate", "619300007", 1.800m, 2.800m, 30, 8, 10, "STORE-1");
+            changed |= AddSeedProduct("Snickers", "Chocolate", "619300008", 2.100m, 3.200m, 28, 8, 10, "STORE-1");
+            changed |= AddSeedProduct("Mars", "Chocolate", "619300009", 2.000m, 3.000m, 30, 8, 10, "STORE-1");
+            changed |= AddSeedProduct("KitKat", "Chocolate", "619300010", 2.000m, 3.000m, 26, 8, 10, "STORE-1");
+            changed |= AddSeedProduct("M&M's", "Chocolate", "619300011", 3.000m, 4.500m, 18, 5, 10, "STORE-1");
+            changed |= AddSeedProduct("Haribo", "Candy", "619300012", 2.800m, 4.200m, 22, 6, 12, "STORE-1");
+            changed |= AddSeedProduct("Chupa Chups", "Candy", "619300013", 0.450m, 0.800m, 80, 20, 18, "STORE-1");
+            changed |= AddSeedProduct("Pringles", "Chips", "619300014", 5.900m, 8.500m, 18, 5, 10, "STORE-1");
+            changed |= AddSeedProduct("Doritos", "Chips", "619300015", 3.200m, 4.800m, 24, 6, 10, "STORE-1");
+            changed |= AddSeedProduct("Lay's Classic", "Chips", "619300016", 2.300m, 3.500m, 40, 10, 10, "STORE-1");
+            changed |= AddSeedProduct("Cheetos", "Chips", "619300017", 2.100m, 3.200m, 35, 8, 10, "STORE-1");
+            changed |= AddSeedProduct("Salted Popcorn", "Snacks", "619300018", 1.000m, 1.700m, 44, 10, 8, "STORE-1");
+            changed |= AddSeedProduct("Salted Crackers", "Biscuits", "619300019", 1.350m, 2.200m, 38, 10, 10, "STORE-1");
+            changed |= AddSeedProduct("Tom Wafer", "Biscuits", "619300020", 0.650m, 1.000m, 54, 12, 10, "STORE-1");
+            changed |= AddSeedProduct("Bondin Coffee", "Groceries", "619300029", 4.500m, 6.500m, 18, 5, 12, "STORE-1");
+            changed |= AddSeedProduct("Green Tea", "Groceries", "619300030", 2.200m, 3.500m, 24, 6, 24, "STORE-1");
+            changed |= AddSeedProduct("Sugar 1kg", "Groceries", "619300031", 1.300m, 1.800m, 30, 8, 24, "STORE-1");
+            changed |= AddSeedProduct("Shampoo 400ml", "Hygiene", "619300032", 5.700m, 8.500m, 18, 5, 24, "STORE-1");
+            changed |= AddSeedProduct("Deodorant Spray", "Hygiene", "619300033", 5.100m, 7.500m, 22, 6, 24, "STORE-1");
+            changed |= AddSeedProduct("AA Batteries", "Household", "619300039", 3.000m, 4.500m, 30, 8, 36, "STORE-1");
+            changed |= AddSeedProduct("Candles", "Household", "619300040", 1.100m, 2.000m, 35, 10, 36, "STORE-1");
+            changed |= AddSeedProduct("Ooredoo Recharge 10 DT", "Services", "619300041", 9.600m, 10.000m, 40, 10, 36, "STORE-1");
+            changed |= AddSeedProduct("Orange Recharge 5 DT", "Services", "619300042", 4.800m, 5.000m, 40, 10, 36, "STORE-1");
+            changed |= AddSeedProduct("TT Recharge 10 DT", "Services", "619300043", 9.600m, 10.000m, 40, 10, 36, "STORE-1");
+
+            changed |= AddSeedProduct("Milka Chocolate", "Chocolate", "619400001", 3.300m, 4.900m, 22, 6, 12, "STORE-2");
+            changed |= AddSeedProduct("Nutella 350g", "Spreads", "619400002", 9.800m, 13.500m, 12, 4, 12, "STORE-2");
+            changed |= AddSeedProduct("Angel Curls", "Snacks", "619400003", 1.650m, 2.500m, 28, 8, 10, "STORE-2");
+            changed |= AddSeedProduct("Swiss Chocolate", "Chocolate", "619400004", 3.700m, 5.500m, 16, 5, 12, "STORE-2");
+            changed |= AddSeedProduct("Kinder Bueno", "Chocolate", "619400005", 2.500m, 3.800m, 24, 8, 10, "STORE-2");
+            changed |= AddSeedProduct("Oreo Original", "Biscuits", "619400006", 2.100m, 3.200m, 28, 8, 10, "STORE-2");
+            changed |= AddSeedProduct("Twix", "Chocolate", "619400007", 1.800m, 2.800m, 20, 8, 10, "STORE-2");
+            changed |= AddSeedProduct("Snickers", "Chocolate", "619400008", 2.100m, 3.200m, 20, 8, 10, "STORE-2");
+            changed |= AddSeedProduct("Mars", "Chocolate", "619400009", 2.000m, 3.000m, 22, 8, 10, "STORE-2");
+            changed |= AddSeedProduct("KitKat", "Chocolate", "619400010", 2.000m, 3.000m, 20, 8, 10, "STORE-2");
+            changed |= AddSeedProduct("M&M's", "Chocolate", "619400011", 3.000m, 4.500m, 14, 5, 10, "STORE-2");
+            changed |= AddSeedProduct("Haribo", "Candy", "619400012", 2.800m, 4.200m, 18, 6, 12, "STORE-2");
+            changed |= AddSeedProduct("Chupa Chups", "Candy", "619400013", 0.450m, 0.800m, 60, 20, 18, "STORE-2");
+            changed |= AddSeedProduct("Pringles", "Chips", "619400014", 5.900m, 8.500m, 12, 5, 10, "STORE-2");
+            changed |= AddSeedProduct("Doritos", "Chips", "619400015", 3.200m, 4.800m, 18, 6, 10, "STORE-2");
+            changed |= AddSeedProduct("Lay's Classic", "Chips", "619400016", 2.300m, 3.500m, 30, 10, 10, "STORE-2");
+            changed |= AddSeedProduct("Cheetos", "Chips", "619400017", 2.100m, 3.200m, 26, 8, 10, "STORE-2");
+            changed |= AddSeedProduct("Salted Popcorn", "Snacks", "619400018", 1.000m, 1.700m, 34, 10, 8, "STORE-2");
+            changed |= AddSeedProduct("Salted Crackers", "Biscuits", "619400019", 1.350m, 2.200m, 28, 10, 10, "STORE-2");
+            changed |= AddSeedProduct("Tom Wafer", "Biscuits", "619400020", 0.650m, 1.000m, 42, 12, 10, "STORE-2");
+            changed |= AddSeedProduct("Bondin Coffee", "Groceries", "619400029", 4.500m, 6.500m, 12, 5, 12, "STORE-2");
+            changed |= AddSeedProduct("Green Tea", "Groceries", "619400030", 2.200m, 3.500m, 18, 6, 24, "STORE-2");
+            changed |= AddSeedProduct("Sugar 1kg", "Groceries", "619400031", 1.300m, 1.800m, 24, 8, 24, "STORE-2");
+            changed |= AddSeedProduct("Shampoo 400ml", "Hygiene", "619400032", 5.700m, 8.500m, 14, 5, 24, "STORE-2");
+            changed |= AddSeedProduct("Deodorant Spray", "Hygiene", "619400033", 5.100m, 7.500m, 16, 6, 24, "STORE-2");
+            changed |= AddSeedProduct("AA Batteries", "Household", "619400039", 3.000m, 4.500m, 22, 8, 36, "STORE-2");
+            changed |= AddSeedProduct("Candles", "Household", "619400040", 1.100m, 2.000m, 26, 10, 36, "STORE-2");
+            changed |= AddSeedProduct("Ooredoo Recharge 10 DT", "Services", "619400041", 9.600m, 10.000m, 30, 10, 36, "STORE-2");
+            changed |= AddSeedProduct("Orange Recharge 5 DT", "Services", "619400042", 4.800m, 5.000m, 30, 10, 36, "STORE-2");
+            changed |= AddSeedProduct("TT Recharge 10 DT", "Services", "619400043", 9.600m, 10.000m, 30, 10, 36, "STORE-2");
+
             return changed;
         }
 
